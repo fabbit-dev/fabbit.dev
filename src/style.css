@@ -1,0 +1,530 @@
+/* Токены цвета — из brand-kit/tokens.css. Тёмная шкала включается на главах с data-theme="dark",
+   а не по системной теме: страница сама чередует белые и чёрные главы. */
+:root {
+  --fb-white: #FFFFFF;
+  --fb-surface: #F5F5F5;
+  --fb-line: #E5E5E5;
+  --fb-muted: #A3A3A3;
+  --fb-text-3: #737373;
+  --fb-text-2: #525252;
+  --fb-ink: #0A0A0A;
+  /* линии и вторичный текст на чёрной плашке внутри светлой главы (карточка ПЛИС) */
+  --fb-ink-line: #333333;
+  --fb-ink-text-2: #D4D4D4;
+  --fb-font-text: "Inter Variable", "Inter", system-ui, sans-serif;
+  --fb-font-tech: "JetBrains Mono", ui-monospace, monospace;
+
+  /* шкала отступов: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96 */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px;
+  --s6: 32px; --s7: 48px; --s8: 64px; --s9: 96px;
+  --section: clamp(80px, 8vw, 120px);
+  --gutter: clamp(16px, 4vw, 56px);
+  --maxw: 1440px;
+  --col: min(520px, 42vw);            /* колонка текста в главах с прибором */
+  --nav-h: calc(var(--s3) + 60px);    /* низ плавающей навигации: отступ сверху + плашка */
+
+  /* радиусы: мелкие детали · кнопки · плашки и карточки */
+  --r1: 6px; --r2: 10px; --r3: 16px;
+
+  /* типографика */
+  --t-display: clamp(34px, 3.8vw, 56px);
+  --t-h2: clamp(34px, 4vw, 60px);
+  --t-h3: 22px;
+  --t-lead: clamp(16px, 1.25vw, 18px);
+  --t-body: 15px;
+  --t-mono: 12px;
+  --t-mono-s: 12px;   /* мельче 12 px текст на сайте не бывает */
+  --t-small: 13px;                    /* мелкий текст карточек на телефоне */
+  --lh-body: 1.45;
+
+  --ease: cubic-bezier(.2, .7, .1, 1);
+  --dur: .3s;
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  --fb-white: #0A0A0A;
+  --fb-surface: #141414;
+  --fb-line: #262626;
+  --fb-muted: #525252;
+  --fb-text-3: #A3A3A3;
+  --fb-text-2: #D4D4D4;
+  --fb-ink: #FFFFFF;
+}
+
+/* ── base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }   /* плавную прокрутку ведёт Lenis */
+body {
+  margin: 0;
+  background: #FFFFFF; color: #0A0A0A;
+  font-family: var(--fb-font-text); font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+img { display: block; }
+[hidden] { display: none !important; }
+a { color: var(--fb-ink); text-decoration: underline; text-underline-offset: .18em; text-decoration-thickness: 1px; }
+a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; }
+code, kbd, .tech { font-family: var(--fb-font-tech); }
+code { font-size: .86em; background: var(--fb-surface); border: 1px solid var(--fb-line); padding: 1px 5px; border-radius: var(--r1); }
+.pixel { image-rendering: pixelated; }
+.nowrap { white-space: nowrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+::selection { background: #0A0A0A; color: #FFFFFF; }
+:focus-visible { outline: 2px solid var(--fb-ink); outline-offset: 3px; border-radius: var(--r1); }
+main:focus { outline: none; }
+/* якоря не прячутся под плавающей навигацией */
+section[id] { scroll-margin-top: calc(var(--nav-h) + var(--s3)); }
+
+.skip { position: absolute; left: var(--s4); top: -60px; z-index: 100; background: #0A0A0A; color: #fff; padding: var(--s2) var(--s3); border-radius: var(--r1); }
+.skip:focus { top: var(--s4); }
+
+.wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter); }
+
+/* ── type ─────────────────────────────────────────── */
+/* Ритм главы везде один: метка → --s5 → заголовок → --s5 → лид → --s6 → содержимое. */
+.label {
+  display: flex; align-items: center; gap: var(--s2);
+  width: fit-content;
+  margin: 0 0 var(--s5);
+  font-family: var(--fb-font-tech); font-size: var(--t-mono); line-height: 1;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--fb-text-3);
+}
+.label::before { content: ""; width: 6px; height: 6px; background: var(--fb-ink); flex: none; }
+.label__n { color: var(--fb-ink); }
+.h2 {
+  width: fit-content;
+  margin: 0 0 var(--s5);
+  font-size: var(--t-h2); line-height: 1; letter-spacing: -.04em; font-weight: 500;
+  color: var(--fb-ink); text-wrap: balance;
+}
+.h2--mono { font-family: var(--fb-font-tech); letter-spacing: -.06em; }
+.lead {
+  max-width: 32em; margin: 0;
+  font-size: var(--t-lead); line-height: 1.5; letter-spacing: -.01em;
+  color: var(--fb-text-2); text-wrap: pretty;
+}
+.lead a { padding-block: 13px; }   /* область касания больше строки, раскладка не меняется */
+.actions { display: flex; flex-wrap: wrap; gap: var(--s2); width: fit-content; margin-top: var(--s6); }
+
+/* ── buttons ──────────────────────────────────────── */
+.btn, .nav__cta, .nav__menu {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
+  border-radius: var(--r2); cursor: pointer;
+  font-weight: 500; text-decoration: none; white-space: nowrap;
+  transition: transform var(--dur) var(--ease), background-color var(--dur), color var(--dur), border-color var(--dur);
+}
+.btn { height: 48px; padding: 0 var(--s5); font-size: var(--t-body); letter-spacing: -.01em;
+  color: var(--fb-ink); background: var(--fb-surface); border: 1px solid var(--fb-line); }
+@media (hover: hover) {
+  .btn:hover, .nav__cta:hover { transform: translateY(-2px); }
+  .btn--line:hover { border-color: var(--fb-text-3); }
+}
+.btn:active { transform: scale(.98); }
+.btn--ink { background: #0A0A0A; color: #fff; border-color: #0A0A0A; }
+.btn--paper { background: #fff; color: #0A0A0A; border-color: #fff; }
+.btn--line { background: transparent; }
+
+/* ── nav: плавающая плашка, левый край совпадает с колонкой текста ── */
+/* Фон плотный, без backdrop-filter: под навигацией каждый кадр перерисовывается WebGL,
+   и размытие пересчитывалось бы на каждом кадре. */
+.nav {
+  position: fixed; z-index: 50; top: var(--s3); left: 50%; transform: translateX(-50%);
+  width: min(calc(100% - 2 * var(--gutter) + 2 * var(--s3)), calc(var(--maxw) - 2 * var(--gutter) + 2 * var(--s3)));
+  min-width: calc(100% - 2 * var(--s2));
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s4);
+  padding: var(--s2) var(--s2) var(--s2) var(--s3);
+  background: #fff; border: 1px solid #E5E5E5; border-radius: var(--r3);
+  transition: background-color .4s var(--ease), border-color .4s var(--ease);
+}
+@media (min-width: 861px) { .nav { min-width: 0; } }
+.nav__logo { display: flex; align-items: center; min-height: 44px; line-height: 0; }
+.nav__logo img { width: 92px; height: 31px; transition: filter .4s; }
+.nav__links { display: flex; gap: var(--s6); }
+.nav__links a { font-family: var(--fb-font-tech); font-size: var(--t-mono); text-decoration: none; color: #525252; transition: color var(--dur); }
+.nav__links a:hover { color: #0A0A0A; }
+.nav__end { display: flex; gap: var(--s2); }
+.nav__cta, .nav__menu { height: 40px; padding: 0 var(--s4); font-family: var(--fb-font-tech); font-size: var(--t-mono); border-radius: var(--r1); }
+.nav__cta { background: #0A0A0A; color: #fff; }
+/* переключатель языка: моно-метка рядом с кнопками, цель касания 44 × 40 */
+.nav__lang { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; height: 40px; padding: 0 var(--s2);
+  font-family: var(--fb-font-tech); font-size: var(--t-mono); letter-spacing: .06em; color: #525252; text-decoration: none; border-radius: var(--r1); transition: color var(--dur); }
+.nav__lang:hover { color: #0A0A0A; }
+.nav.is-dark .nav__lang { color: #A3A3A3; }
+.nav.is-dark .nav__lang:hover { color: #fff; }
+.menu-open .nav .nav__lang { color: #525252; }
+.nav__menu { display: none; background: transparent; border: 1px solid #E5E5E5; color: #0A0A0A; }
+/* три полоски; в открытом меню верхняя и нижняя сходятся в крестик, средняя гаснет */
+.nav__burger, .nav__burger::before, .nav__burger::after { display: block; width: 18px; height: 2px; background: currentColor; transition: transform var(--dur) var(--ease), opacity var(--dur); }
+.nav__burger { position: relative; }
+.nav__burger::before, .nav__burger::after { content: ""; position: absolute; left: 0; }
+.nav__burger::before { top: -6px; }
+.nav__burger::after { top: 6px; }
+.nav__menu[aria-expanded="true"] .nav__burger { background: transparent; }
+.nav__menu[aria-expanded="true"] .nav__burger::before { transform: translateY(6px) rotate(45deg); }
+.nav__menu[aria-expanded="true"] .nav__burger::after { transform: translateY(-6px) rotate(-45deg); }
+.nav.is-dark { background: #0A0A0A; border-color: #262626; }
+.nav.is-dark .nav__logo img { filter: invert(1); }
+.nav.is-dark .nav__links a { color: #A3A3A3; }
+.nav.is-dark .nav__links a:hover { color: #fff; }
+.nav.is-dark .nav__cta { background: #fff; color: #0A0A0A; }
+.nav.is-dark .nav__menu { color: #fff; border-color: #333; }
+.nav.is-dark :focus-visible { outline-color: #fff; }
+
+/* меню разделов на телефоне */
+.menu {
+  position: fixed; inset: 0; z-index: 60; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; justify-content: space-between; gap: var(--s6);
+  padding: calc(var(--nav-h) + var(--s5)) var(--gutter) calc(var(--s6) + env(safe-area-inset-bottom));
+  background: #fff; color: #0A0A0A;
+}
+/* меню не выпрыгивает: фон проявляется, строки поднимаются лесенкой */
+.menu:not([hidden]) { animation: menu-in .3s var(--ease); }
+.menu:not([hidden]) .menu__list li, .menu:not([hidden]) .menu__foot { animation: menu-row .5s var(--ease) backwards; }
+.menu__list li:nth-child(2) { animation-delay: 30ms; }
+.menu__list li:nth-child(3) { animation-delay: 60ms; }
+.menu__list li:nth-child(4) { animation-delay: 90ms; }
+.menu__list li:nth-child(5) { animation-delay: 120ms; }
+.menu__list li:nth-child(6) { animation-delay: 150ms; }
+.menu__foot { animation-delay: 180ms !important; }
+@keyframes menu-in { from { opacity: 0; } }
+@keyframes menu-row { from { opacity: 0; transform: translateY(12px); } }
+.menu__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--fb-line); }
+.menu__list a {
+  display: flex; align-items: baseline; gap: var(--s4); min-height: 56px; padding: var(--s3) 0;
+  border-bottom: 1px solid var(--fb-line);
+  font-size: var(--t-h3); font-weight: 500; letter-spacing: -.03em; text-decoration: none; color: inherit;
+}
+.menu__n { font-family: var(--fb-font-tech); font-size: var(--t-mono); letter-spacing: .06em; color: var(--fb-text-3); }
+.menu__foot { display: grid; gap: var(--s2); }
+.menu-open .nav { z-index: 70; background: #fff; border-color: #E5E5E5; }
+.menu-open .nav .nav__logo img { filter: none; }
+.menu-open .nav .nav__cta { display: none; }
+.menu-open .nav .nav__menu { color: #0A0A0A; border-color: #E5E5E5; }
+
+/* ── stage: canvas поверх фона глав, под их текстом ── */
+/* Прибор липнет к верху экрана внутри истории и в её конце уезжает вместе с последней главой:
+   браузер двигает его в том же кадре, что и текст, поэтому чертёж не обрезается следующим блоком.
+   Нижний край дорожки (--story-tail) — там, где кончается липкая карточка последней главы (телефон). */
+#story { position: relative; }
+.stage-track { position: absolute; inset: 0 0 var(--story-tail, 0px); z-index: 1; pointer-events: none; }
+.stage { position: sticky; top: 0; height: 100vh; pointer-events: none; }
+.stage.is-off { visibility: hidden; }     /* история прокручена: WebGL не рисует, слой не композитится */
+/* прибор можно повернуть пальцем или мышью: горизонтальный жест крутит, вертикальный остаётся прокруткой */
+#gl { pointer-events: auto; touch-action: pan-y; cursor: grab; }
+#gl:active { cursor: grabbing; }
+.sticky, .scene .wrap { pointer-events: none; }   /* пустые места над прибором пропускают жест к холсту */
+.scene .wrap > * { pointer-events: auto; }
+.stage__hint {
+  position: absolute; left: 50%; bottom: var(--s5); transform: translateX(-50%); margin: 0;
+  font-size: var(--t-mono-s); letter-spacing: .06em; text-transform: uppercase; color: var(--fb-text-3);
+  opacity: 0; transition: opacity var(--dur); pointer-events: none; white-space: nowrap;
+}
+.stage__hint.is-on { opacity: 1; }
+#gl { width: 100%; height: 100%; display: block; }
+.overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.overlay text { font-family: var(--fb-font-tech); font-size: var(--t-mono); font-weight: 500; }
+.callouts { position: absolute; inset: 0; }
+.callout {
+  position: absolute; left: 0; top: 0;
+  font-family: var(--fb-font-tech); font-size: var(--t-mono); line-height: 1.3;
+  white-space: nowrap; color: #0A0A0A;
+  opacity: 0; will-change: transform, opacity;
+}
+.callout b { font-weight: 500; display: block; }
+.callout span { color: #737373; display: block; }
+.callout.is-left { text-align: right; }
+/* узкий широкий экран (1024 и около): между текстом и прибором мало места — подписи переносятся в две строки */
+@media (max-width: 1279px) { .callout { white-space: normal; width: max-content; max-width: 150px; } }
+
+.scene, .block, .footer { position: relative; background: var(--fb-white); color: var(--fb-ink); }
+.scene .wrap { position: relative; z-index: 2; }
+.block, .footer { z-index: 3; }
+
+/* ── главы с прибором: одна колонка текста слева ─── */
+.col > * { max-width: var(--col); }
+
+/* hero */
+.hero { min-height: 100svh; display: flex; align-items: center; }
+.hero__inner { padding-top: var(--s9); padding-bottom: var(--s9); }
+.hero__brand { --cell: 4px; display: flex; width: fit-content; align-items: flex-end; gap: calc(3 * var(--cell)); margin: 0 0 var(--s5); }
+.hero__logo { width: 232px; height: 76px; }    /* 4× сетки знака: крупнее спорит с заголовком */
+/* заяц: сцена 24×19 клеток, прыжок и «душа» вылетают выше неё */
+.hero__bunny { padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; min-height: 44px; display: flex; align-items: flex-end; }   /* цель касания не ниже 44 px */
+.hero__bunny svg { display: block; width: calc(24 * var(--cell)); height: calc(19 * var(--cell)); overflow: visible; color: var(--fb-ink); transition: transform .2s steps(2); }
+.hero__title { margin: 0; font-weight: 500; width: fit-content; }
+.hero__claim { display: block; max-width: 11.5em; font-size: var(--t-display); line-height: 1; letter-spacing: -.04em; text-wrap: balance; }
+.hero .col > * { max-width: none; }
+.hero .hero__lead { max-width: min(30em, var(--col)); margin-top: var(--s5); }
+/* заставка на месте прибора, пока грузится 3D (поверх холста, гаснет, когда он готов) */
+.no-gl .hero__fallback { position: absolute; }   /* без WebGL это просто картинка в hero, а не слой поверх страницы */
+.hero__fallback { position: fixed; right: calc(var(--gutter) + 4vw); top: 54%; transform: translateY(-50%); height: 70svh; width: auto; z-index: 2; pointer-events: none; }
+
+.scrollhint {
+  position: absolute; left: 50%; bottom: var(--s5); transform: translateX(-50%); z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: var(--s2);
+  font-size: var(--t-mono-s); color: var(--fb-text-3); letter-spacing: .06em; text-transform: uppercase;
+}
+.scrollhint img { width: 22px; height: 30px; }
+
+/* sticky */
+.sticky { position: sticky; z-index: 2; top: 0; height: 100svh; display: flex; align-items: center; overflow: hidden; }
+.profiles { height: 360svh; }
+.device { height: 230svh; }
+.blueprint { height: 200svh; }
+.sticky .wrap { padding-top: var(--nav-h); }   /* место под навигацию */
+
+/* профили: строка — кнопка, активная раскрывает описание */
+.plist { list-style: none; margin: var(--s6) 0 0; padding: 0; border-top: 1px solid var(--fb-line); width: var(--col); }
+.plist li { border-bottom: 1px solid var(--fb-line); }
+.plist button {
+  display: grid; grid-template-columns: 16px 1fr auto; column-gap: var(--s4); align-items: center;
+  width: 100%; min-height: 40px; padding: var(--s2) 0; border: 0; background: none; text-align: left;
+  color: var(--fb-text-3); cursor: pointer;   /* неактивные строки читаемы: #A3A3A3 на чёрном */
+  transition: color var(--dur) var(--ease);
+}
+.plist button:hover { color: var(--fb-text-2); }
+.plist img { width: 16px; height: 16px; filter: invert(1); opacity: .35; transition: opacity var(--dur); }
+.plist .t { font-size: var(--t-body); letter-spacing: -.01em; }
+.plist .n { font-family: var(--fb-font-tech); font-size: var(--t-mono-s); }
+.plist .d {
+  grid-column: 2 / 4; font-size: var(--t-body); line-height: var(--lh-body); color: var(--fb-text-2);
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height .45s var(--ease), opacity var(--dur), padding .45s var(--ease);
+}
+.plist [aria-current="true"] button { color: var(--fb-ink); }
+.plist [aria-current="true"] img { opacity: 1; }
+.plist [aria-current="true"] .d { max-height: 3em; opacity: 1; padding-top: var(--s1); }
+.pmeta {
+  display: flex; align-items: center; gap: var(--s2); width: var(--col);
+  margin: var(--s4) 0 0; font-size: var(--t-mono-s); color: var(--fb-text-3);
+}
+.pmeta__count { margin: 0 auto 0 0; order: -1; }
+.pmeta b { color: var(--fb-ink); font-weight: 500; }
+.pmeta__step {
+  display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  border: 1px solid var(--fb-line); border-radius: var(--r1); background: none; cursor: pointer;
+  font-family: var(--fb-font-tech); font-size: var(--t-body); color: var(--fb-ink);
+  transition: opacity var(--dur);
+}
+.pmeta__step:disabled { opacity: .3; cursor: default; }
+.pmeta__bar, .stage__screen { display: none; }   /* только телефон */
+/* точки привязки профилей на телефоне (main.js: layoutSnap); включаются классом .snap на html */
+html.snap { scroll-snap-type: y mandatory; }
+.psnap { position: absolute; inset: 0; pointer-events: none; }
+.psnap i { position: absolute; left: 0; width: 1px; height: 1px; scroll-snap-align: start; scroll-snap-stop: always; }
+
+/* ── блоки после истории ─────────────────────────── */
+.block { padding: var(--section) 0; }
+.block + .block { border-top: 1px solid var(--fb-line); }
+/* «Начинка» идёт сразу за чертежом, который уезжает вместе со страницей: полный отступ давал пустой экран */
+@media (min-width: 861px) { .how { padding-top: calc(var(--section) * .5); } }
+
+.open__grid { display: grid; grid-template-columns: 5fr 7fr; gap: var(--s8); align-items: start; }
+.tree {
+  margin: 0; padding: var(--s5); overflow-x: auto;
+  background: var(--fb-surface); border: 1px solid var(--fb-line); border-radius: var(--r3);
+}
+.tree pre { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;   /* в JetBrains Mono нет псевдографики ├──, системный моноширинный держит колонки ровно */
+   font-size: 14px; line-height: 1.7; color: var(--fb-ink); }
+.tree .t3 { color: var(--fb-text-3); }
+
+/* команда: двое по краям, между ними человечки дают пять */
+.team__grid { display: grid; gap: var(--s7); }
+.team__grid .h2 { margin-bottom: 0; }
+.team__lead { margin-top: var(--s5); }
+.crew {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--s6);
+  padding-top: var(--s6); border-top: 1px solid var(--fb-line);
+}
+.highfive { display: block; width: 288px; height: 168px; color: var(--fb-ink); } /* 6× сетки 48×28 */
+/* человечки по центру аватаров, а не всей карточки: будто сами люди дают пять */
+.crew { --avatar: 144px; align-items: start; }
+.crew .highfive { margin-top: calc((var(--avatar) - 168px) / 2); }
+.person { display: grid; justify-items: center; text-align: center; gap: var(--s2); margin: 0; }
+.person__avatar { position: relative; width: 144px; height: 144px; margin-bottom: var(--s2); overflow: hidden; }   /* без скругления и подложки: белый фон фото сливается со страницей */
+.person__avatar img { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* фото чёрно-белое, при наведении проявляется цвет */
+.person__photo { filter: grayscale(1); transition: filter .6s var(--ease); }
+/* 1-битная версия лежит сверху и «догружается» в фото, когда карточка появляется на экране */
+.person__dither { background: #fff; }
+.person__avatar.is-seen .person__dither { animation: dither-out .9s steps(5) .35s forwards; }
+@keyframes dither-out { to { opacity: 0; visibility: hidden; } }
+@media (hover: hover) {
+  .hero__bunny:hover svg { transform: translateY(calc(-1 * var(--cell))); }   /* заяц подпрыгивает под курсором: видно, что он нажимается */
+  .person:hover .person__photo { filter: grayscale(0); }
+}
+.person__name { margin: 0; font-size: var(--t-h3); font-weight: 500; letter-spacing: -.03em; line-height: 1.15; text-wrap: balance; }
+.person__role { margin: 0; font-size: var(--t-body); line-height: var(--lh-body); color: var(--fb-text-2); text-wrap: balance; }
+.person__age { font-size: var(--t-mono-s); color: var(--fb-text-3); letter-spacing: .06em; text-transform: uppercase; }
+
+/* ── footer ───────────────────────────────────────── */
+.footer { padding: var(--s6) 0 var(--s5); border-top: 1px solid var(--fb-line); overflow: hidden; }
+/* высота дорожки — ровно заяц и зазор под ним: над ним нет пустой полосы */
+@media (min-width: 861px) { .runner-wrap { max-width: none; padding: 0; } }   /* заяц бежит через всю страницу */
+.runner { position: relative; height: 40px; margin-bottom: var(--s5); overflow: hidden; }
+.runner__bunny { position: absolute; bottom: var(--s1); left: 0; width: 48px; height: 36px; }   /* 2× */
+.runner__track { position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: repeating-linear-gradient(90deg, #0A0A0A 0 4px, transparent 4px 8px); }
+.footer__row { display: flex; align-items: center; justify-content: space-between; gap: var(--s5); flex-wrap: wrap; }
+.footer__row p, .footer__row a { margin: 0; font-size: var(--t-mono); }
+.footer__row p { color: var(--fb-text-3); }
+.footer__top { display: inline-flex; align-items: center; gap: var(--s1); min-height: 44px; }
+
+/* ── reveal: скрыто только когда JS готов ────────── */
+.js .reveal { opacity: 0; transform: translateY(24px); }
+
+/* ── adaptive ─────────────────────────────────────── */
+@media (max-height: 820px) and (min-width: 861px) {
+  .hero__brand { --cell: 3px; margin-bottom: var(--s5); }
+  .hero__logo { width: 174px; height: 57px; }  /* 3× */
+  .profiles .lead { display: none; }
+  .plist { margin-top: var(--s4); }
+  .plist button { min-height: 32px; padding: var(--s1) 0; }
+}
+@media (max-width: 1100px) {
+  :root { --col: min(440px, 44vw); }
+  .hero__claim { max-width: var(--col); }
+}
+/* телефон стоя (или узкое высокое окно); телефон на боку — ниже, отдельным блоком */
+@media (max-width: 860px) and ((orientation: portrait) or (min-height: 501px)) {
+  :root { --col: 100%; --nav-h: calc(var(--s2) + 62px); --section: var(--s8); }
+  .nav { top: var(--s2); }
+  .nav__links { display: none; }
+  .nav__menu { display: inline-flex; }
+  .nav__cta { display: none; }   /* GitHub на телефоне — в меню */
+  .nav__menu { width: 44px; height: 44px; padding: 0; }
+
+  /* Телефон: прибор живёт в непрозрачной полосе сверху (--stage-h), текст глав прокручивается под ней.
+     Так прибор всегда виден целиком и текст на него не наезжает — как у Analogue Pocket: картинка, под ней текст. */
+  :root { --stage-h: 52svh; }   /* точное значение ставит main.js: экран минус самая высокая карточка */
+  .stage-track { z-index: 4; }
+  /* Холст во всю высоту над текстом глав (до --canvas-h), непрозрачна только верхняя полоса --stage-h:
+     она прячет уезжающий вверх текст. Ниже холст прозрачный, и прибор в каждой главе занимает всё место
+     до её собственного текста. Цвет полосы ведёт main.js (bandBg): тёмная глава «Профили» продолжается в ней. */
+  .stage { height: 100svh; background: linear-gradient(#fff var(--stage-h), transparent 0); }
+  #gl { height: var(--canvas-h, 100%); pointer-events: none; }
+  .stage.can-drag #gl { pointer-events: auto; }   /* крутить можно только чертёж; иначе холст закрыл бы стрелки профилей */
+  /* профили: вместо 3D — сам экран прибора, крупно и без корпуса */
+  .stage__screen {
+    position: absolute; inset: 0 0 var(--nat-profiles, 0px); display: grid; place-items: center;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);   /* ячейка точной высоты: иначе max-height у холста не работает и на низких телефонах он вылезает на карточку */
+    padding: calc(var(--nav-h) + var(--s3)) var(--s4) var(--s4);
+    background: #0A0A0A; opacity: var(--in, 0); visibility: hidden; transition: opacity .35s var(--ease), visibility 0s .35s;   /* --in: проявление при подходе к главе (main.js) */
+  }
+  .stage__screen.is-on { opacity: 1; visibility: visible; transition: opacity .35s var(--ease); }
+  .stage__screen canvas { width: auto; height: auto; max-width: 100%; max-height: 100%; aspect-ratio: 4 / 3; border-radius: var(--r1); outline: 1px solid #262626; }
+  /* профили листаются прокруткой и стрелками; шкала показывает, где ты в списке */
+  .pmeta__bar { display: flex; gap: 3px; flex: 1; max-width: 40%; margin-right: var(--s2); }
+  .pmeta__bar i { flex: 1; height: 3px; background: var(--fb-line); transition: background-color var(--dur); }
+  .pmeta__bar i.is-on { background: var(--fb-ink); }
+  .stage.is-dark .stage__hint { color: #A3A3A3; }
+  .stage__hint { bottom: calc(var(--nat-blueprint, 0px) - var(--s2)); }   /* сразу над текстом «Чертежа» */
+  /* подпись детали в разборке: одна за раз, по центру под прибором */
+  .callout { text-align: center; max-width: calc(100vw - 32px); }
+  .callout, .overlay polyline, .overlay rect { transition: opacity .25s var(--ease); }
+
+  .hero { display: block; min-height: 100svh; }   /* тёмная глава начинается ровно за краем экрана, без полоски снизу */
+  /* Текст hero прижат к низу первого экрана, как текст глав: кнопки под большим пальцем,
+     свободное место уходит вверх, к прибору. */
+  .hero__inner {
+    display: flex; flex-direction: column; justify-content: flex-end;   /* без WebGL заставка встаёт первой (order в .no-gl) */
+    min-height: 100svh; padding-top: calc(var(--stage-h) + var(--s5)); padding-bottom: calc(var(--s6) + env(safe-area-inset-bottom));
+  }
+  /* логотип уже в шапке: в hero на телефоне остаётся только заяц (кликабельная сценка), крупно не дублируем */
+  .hero__logo { display: none; }
+  /* заяц — справа у первой строки заголовка, в потоке: отрицательный отступ снизу убирает отдельный ряд */
+  .hero__brand { --cell: 2px; align-self: flex-end; margin: 0 0 -44px; }
+  .hero__claim { max-width: calc(100% - 64px); }   /* справа от первой строки сидит заяц */
+  .hero .actions { margin-top: var(--s5); }
+  .hero .hero__lead { font-size: var(--t-body); line-height: var(--lh-body); margin-top: var(--s3); }
+  .btn { padding: 0 var(--s4); }
+  .scrollhint { display: none; }
+
+  /* главы-истории короче: на телефоне то же самое за меньшее число экранов */
+  .profiles { height: 300svh; }
+  .device { height: 175svh; }   /* разлёт, разворот и пять подписей по очереди */
+  .blueprint { height: 110svh; }
+  /* карточка текста липнет сразу под полосой прибора: приходит вслед за прошлой главой, без пустых экранов */
+  .sticky { top: var(--stage-h); height: auto; display: block; overflow: visible; }
+  .sticky .wrap { padding-top: var(--s5); padding-bottom: calc(var(--s5) + env(safe-area-inset-bottom)); }
+  /* короткая карточка тянется до низа экрана, текст прижат к низу: свободное место остаётся у прибора,
+     а не пустым полем под текстом */
+  .sticky .wrap { min-height: calc(100svh - var(--stage-h)); display: flex; flex-direction: column; justify-content: flex-end; }
+  .is-measuring .sticky .wrap { min-height: 0; }
+  /* ритм на телефоне один для всех глав: метка → 16 → заголовок → 16 → текст */
+  .label, .h2 { margin-bottom: var(--s4); }
+  .sticky .lead { font-size: var(--t-body); line-height: var(--lh-body); }
+  /* лид профилей — мелко и под заголовком: карточка всё равно ниже hero, полоса прибора не ужимается */
+  .profiles .lead { font-size: var(--t-small); margin-top: calc(-1 * var(--s2)); }
+  .plist { margin-top: var(--s2); }
+  .plist li:not([aria-current="true"]) { display: none; }
+  .plist .d { transition: none; }
+  .plist [aria-current="true"] .d { height: calc(2 * var(--lh-body) * 1em + var(--s1)); max-height: none; }   /* + отступ сверху: хвосты букв не режутся */
+  .pmeta { margin-top: var(--s2); }
+
+  .open__grid { grid-template-columns: 1fr; gap: var(--s7); }
+  .team__grid { gap: var(--s4); }
+  .crew { gap: var(--s3); padding-top: var(--s5); }
+  .person__avatar { width: 96px; height: 96px; }
+  .person__name { font-size: var(--t-lead); min-height: 2.3em; }   /* имена в две строки: колонки на одной линии */
+  .person__role { font-size: var(--t-mono); min-height: calc(3 * var(--lh-body) * 1em); }   /* роли до трёх строк: низ колонок ровный */
+  .crew { --avatar: 96px; }
+  .highfive { width: 96px; height: 56px; } /* 2× */
+  .crew .highfive { margin-top: calc((var(--avatar) - 56px) / 2); }
+  .tree pre { font-size: var(--t-mono); }
+  /* подвал: логотип и «Наверх» в одну строку, мелкий текст под ними */
+  .footer__row { row-gap: 0; }
+  .footer__row p { order: 3; flex-basis: 100%; padding-bottom: env(safe-area-inset-bottom); }
+
+  /* без WebGL истории не липнут: иначе 6 пустых экранов */
+  .no-gl .profiles, .no-gl .device, .no-gl .blueprint { height: auto; }
+  .no-gl .sticky { position: static; height: auto; }
+  .no-gl .stage { display: none; }
+  .no-gl .hero__inner, .no-gl .sticky .wrap { padding-top: var(--nav-h); margin-top: 0; }
+  .no-gl .hero__fallback { position: static; transform: none; width: auto; height: 46svh; margin: var(--s7) auto 0; order: -1; }
+  /* заставка в полосе прибора */
+  .hero__fallback { right: auto; left: 50%; top: calc(var(--nav-h) + var(--s4)); transform: translateX(-50%); height: calc(var(--stage-h) - var(--nav-h) - var(--s7)); z-index: 5; }
+}
+/* Планшет стоя: раскладка телефона, но экран вдвое шире — текст крупнее, поля шире */
+@media (min-width: 600px) and (max-width: 860px) and (min-height: 700px) {
+  :root { --t-display: 48px; --t-h2: 44px; --t-lead: 18px; --gutter: 32px; }
+  .sticky .lead, .hero .hero__lead { font-size: var(--t-lead); }
+  .profiles .lead { font-size: var(--t-body); }
+  .plist .t, .plist .d { font-size: 17px; }
+  .hero__brand { --cell: 4px; }
+  .hero__logo { width: 232px; height: 76px; }  /* 4× */
+}
+/* Телефон на боку: полоса прибора сверху и карточка под ней не помещаются по высоте, поэтому раскладка
+   широкого экрана — текст слева, прибор справа (isLandscapePhone в layout.js), только плотнее. */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root { --nav-h: calc(var(--s2) + 62px); --t-display: 32px; --t-h2: 30px; --section: var(--s8); }
+  .nav { top: var(--s2); }
+  .btn { height: 44px; padding: 0 var(--s4); }
+  .hero__inner { padding-top: calc(var(--nav-h) + var(--s4)); padding-bottom: var(--s5); }
+  .hero__brand { --cell: 3px; margin-bottom: var(--s3); }
+  .hero__logo { width: 174px; height: 57px; }   /* 3× */
+  .hero .hero__lead, .scrollhint { display: none; }   /* что это за прибор, говорит подводка над заголовком */
+  .hero .actions { margin-top: var(--s4); }
+  .label, .h2 { margin-bottom: var(--s3); }
+  .sticky .lead { font-size: var(--t-body); line-height: var(--lh-body); }
+  /* профили: как на телефоне — одна активная строка и шкала, плюс стрелки */
+  .profiles .lead { display: none; }
+  .plist { margin-top: var(--s3); }
+  .plist li:not([aria-current="true"]) { display: none; }
+  .plist .d { transition: none; }
+  .plist [aria-current="true"] .d { height: calc(2 * var(--lh-body) * 1em + var(--s1)); max-height: none; }
+  .pmeta { margin-top: var(--s2); }
+  .pmeta__bar { display: flex; gap: 3px; flex: 1; max-width: 40%; margin-right: var(--s2); }
+  .pmeta__bar i { flex: 1; height: 3px; background: var(--fb-line); transition: background-color var(--dur); }
+  .pmeta__bar i.is-on { background: var(--fb-ink); }
+  .stage__hint { bottom: var(--s3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .js .reveal { opacity: 1; transform: none; }
+  .person__avatar .person__dither { display: none; }
+  .scrollhint img, .runner__bunny { display: none; }
+}

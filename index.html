@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Корень — русская версия. Кто пришёл без ru среди языков браузера (и не выбирал язык сам), уходит на /en/.
+       Роботов не переадресуем. Та же логика — pickStartLang() в src/i18n.js, i18n.test.js сверяет их. -->
+  <script>(function(){try{if(location.pathname!=='/')return;var s=null;try{s=localStorage.getItem('fabbit-lang')}catch(e){}var l=s==='ru'||s==='en'?s:/bot|crawl|spider|slurp|lighthouse/i.test(navigator.userAgent)?'ru':(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'']).some(function(x){return String(x).toLowerCase().indexOf('ru')===0})?'ru':'en';if(l==='en')location.replace('/en/'+location.hash)}catch(e){}})();</script>
+  <title>Fabbit: карманный мультитул для электронщика</title>
+  <meta name="description" content="Fabbit, карманный мультитул для электронщика: осциллограф, логический анализатор и ретро-консоль в одном корпусе на ПЛИС. Открытый проект двух школьников.">
+  <link rel="canonical" href="https://fabbit.dev/">
+  <link rel="alternate" hreflang="ru" href="https://fabbit.dev/">
+  <link rel="alternate" hreflang="en" href="https://fabbit.dev/en/">
+  <link rel="alternate" hreflang="x-default" href="https://fabbit.dev/">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fabbit.dev/">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:title" content="Fabbit">
+  <meta property="og:description" content="Карманный мультитул для электронщика: осциллограф, логический анализатор и ретро-консоль в одном корпусе.">
+  <meta property="og:image" content="https://fabbit.dev/og-image-light.png">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+  <a class="skip" href="#main">К содержанию</a>
+
+  <header class="nav" id="nav">
+    <a class="nav__logo" href="#top" aria-label="Fabbit, наверх">
+      <img class="pixel" src="/brand/fabbit-logo-ink.svg" width="92" height="31" alt="" translate="no">
+    </a>
+    <nav class="nav__links" aria-label="Разделы">
+      <a href="#profiles">Профили</a>
+      <a href="#device">Разборка</a>
+      <a href="#blueprint">Чертёж</a>
+      <a href="#how">Начинка</a>
+      <a href="#team">Команда</a>
+      <a href="#open">Код</a>
+    </nav>
+    <div class="nav__end">
+      <a class="nav__lang" href="/en/" hreflang="en" lang="en" aria-label="English version" onclick="try{localStorage.setItem('fabbit-lang','en')}catch(e){}">EN</a>
+      <a class="nav__cta" href="https://github.com/fabbit-dev/fabbit" target="_blank" rel="noopener">GitHub</a>
+      <button class="nav__menu" type="button" aria-expanded="false" aria-controls="menu" aria-label="Меню"><span class="nav__burger" aria-hidden="true"></span></button>
+    </div>
+  </header>
+
+  <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Разделы" hidden>
+    <nav aria-label="Разделы">
+      <ol class="menu__list">
+        <li><a href="#profiles"><span class="menu__n">01</span>Профили</a></li>
+        <li><a href="#device"><span class="menu__n">02</span>Разборка</a></li>
+        <li><a href="#blueprint"><span class="menu__n">03</span>Чертёж</a></li>
+        <li><a href="#how"><span class="menu__n">04</span>Начинка</a></li>
+        <li><a href="#team"><span class="menu__n">05</span>Команда</a></li>
+        <li><a href="#open"><span class="menu__n">06</span>Код</a></li>
+      </ol>
+    </nav>
+    <div class="menu__foot">
+      <a class="btn btn--ink" href="https://github.com/fabbit-dev/fabbit" target="_blank" rel="noopener">Исходники на GitHub</a>
+    </div>
+  </div>
+
+  <main id="main" tabindex="-1">
+    <div id="story">
+      <!-- прибор: липнет к верху, пока идёт история, и уезжает вместе с её последней главой -->
+      <div class="stage-track" aria-hidden="true">
+        <div class="stage">
+          <canvas id="gl"></canvas>
+          <svg class="overlay" id="overlay"></svg>
+          <div class="callouts" id="callouts" translate="no"></div>
+          <p class="stage__hint tech">Потяните, чтобы повернуть</p>
+          <div class="stage__screen" id="stage-screen"></div>
+        </div>
+      </div>
+      <!-- 1. Hero -->
+      <section class="scene hero" id="top" data-theme="light" aria-labelledby="top-title">
+        <div class="wrap col hero__inner">
+          <div class="hero__brand reveal">
+            <img class="hero__logo pixel" src="/brand/fabbit-wordmark-ink.svg" width="348" height="114" alt="" fetchpriority="high">
+            <button class="hero__bunny" type="button" aria-label="Заяц Fabbit: показать сценку"><svg id="bunny" aria-hidden="true"></svg></button>
+          </div>
+          <h1 class="hero__title" id="top-title"><span class="sr-only" translate="no">Fabbit. </span><span class="hero__claim reveal">Карманный мультитул для&nbsp;электронщика.</span></h1>
+          <p class="lead hero__lead reveal">Осциллограф, анализатор и&nbsp;<span class="nowrap">ретро-консоль</span> в&nbsp;одном&nbsp;корпусе. Сделано школьниками.</p>
+          <div class="actions reveal">
+            <a class="btn btn--ink" href="https://github.com/fabbit-dev/fabbit" target="_blank" rel="noopener">Исходники на GitHub</a>
+            <a class="btn" href="#profiles">Профили <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+        <!-- рендер корпуса: заставка, пока грузится 3D, и замена ему без WebGL (main.js) -->
+        <img class="hero__fallback" src="/fabbit-render.webp" width="640" height="1055" alt="Корпус Fabbit" fetchpriority="low">
+        <div class="scrollhint tech" aria-hidden="true">
+          <img class="pixel" src="/brand/anim/hop-ink.svg" width="22" height="30" alt="">
+          <span>листайте</span>
+        </div>
+      </section>
+
+      <!-- 2. Profiles (dark, sticky) -->
+      <section class="scene profiles" id="profiles" data-theme="dark" aria-labelledby="profiles-title">
+        <div class="sticky">
+          <div class="wrap col profiles__inner">
+            <div class="profiles__head">
+              <p class="label reveal"><span class="label__n">01</span>Профили</p>
+              <h2 class="h2 reveal" id="profiles-title">Девять приборов<br>на&nbsp;одной плате.</h2>
+              <p class="lead reveal">Все каналы работают одновременно, триггер срабатывает с&nbsp;точностью до&nbsp;такта.</p>
+            </div>
+            <ol class="plist reveal" id="plist" aria-label="Профили"></ol>
+            <div class="pmeta tech reveal">
+              <button class="pmeta__step" type="button" data-step="-1" aria-label="Предыдущий профиль"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+              <p class="pmeta__count"><b id="pcur">01</b> / 09</p>
+              <span class="pmeta__bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <button class="pmeta__step" type="button" data-step="1" aria-label="Следующий профиль"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Exploded view (sticky) -->
+      <section class="scene device" id="device" data-theme="light" aria-labelledby="device-title">
+        <div class="sticky">
+          <div class="wrap col device__inner">
+            <p class="label reveal"><span class="label__n">02</span>Разборка</p>
+            <h2 class="h2 reveal" id="device-title">Разбираем<br>по&nbsp;слоям.</h2>
+            <p class="lead reveal">Спереди экран и&nbsp;кнопки. Под&nbsp;задней крышкой стоят ПЛИС, АЦП и&nbsp;аккумулятор.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Blueprint (sticky) -->
+      <section class="scene blueprint" id="blueprint" data-theme="light" aria-labelledby="blueprint-title">
+        <div class="sticky">
+          <div class="wrap col blueprint__inner">
+            <p class="label reveal"><span class="label__n">03</span>Чертёж</p>
+            <h2 class="h2 h2--mono reveal" id="blueprint-title">88×150×22&nbsp;мм</h2>
+            <p class="lead reveal">Размером с&nbsp;первый Game Boy, только на&nbsp;сантиметр тоньше. Модель корпуса лежит в&nbsp;репозитории: скачайте <a href="https://github.com/fabbit-dev/fabbit/blob/main/hardware/case/fabbit_case.FCStd" target="_blank" rel="noopener"><code translate="no">fabbit_case.FCStd</code></a> и&nbsp;печатайте свой.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 5. Из чего сделан: разметку вставляет плагин static-island из src/build/ при сборке (vite.config.js) -->
+    <section class="block how" id="how" data-theme="light" aria-labelledby="how-title"><!--island:build--></section>
+
+    <!-- 6. Команда -->
+    <section class="block team" id="team" data-theme="light" aria-labelledby="team-title">
+      <div class="wrap team__grid">
+        <div>
+          <p class="label reveal"><span class="label__n">05</span>Команда</p>
+          <h2 class="h2 reveal" id="team-title">Собираем Fabbit <br>в&nbsp;10&nbsp;классе.</h2>
+          <p class="lead team__lead reveal">Схемы, логику для&nbsp;ПЛИС, прошивку и&nbsp;корпус делаем сами. Каждый шаг, неудачные тоже, записываем в&nbsp;дневник.</p>
+        </div>
+        <div class="crew">
+          <article class="person reveal" aria-labelledby="p-roma">
+            <div class="person__avatar">
+              <img class="person__photo" src="/team/roma.webp" width="288" height="288" loading="lazy" alt="">
+              <img class="person__dither pixel" src="/team/roma-dither.png" width="72" height="72" loading="lazy" alt="">
+            </div>
+            <span class="person__age tech">15&nbsp;лет</span>
+            <h3 class="person__name" id="p-roma">Рома <br>Горбачев</h3>
+            <p class="person__role">Главный инженер, программист</p>
+          </article>
+          <svg class="highfive pixel reveal" id="highfive" role="img" aria-label="Два пиксельных человечка дают друг другу пять"></svg>
+          <article class="person reveal" aria-labelledby="p-yar">
+            <div class="person__avatar">
+              <img class="person__photo" src="/team/yaroslav.webp" width="288" height="288" loading="lazy" alt="">
+              <img class="person__dither pixel" src="/team/yaroslav-dither.png" width="72" height="72" loading="lazy" alt="">
+            </div>
+            <span class="person__age tech">16&nbsp;лет</span>
+            <h3 class="person__name" id="p-yar">Ярик <br>Павлюк</h3>
+            <p class="person__role">Корпус и&nbsp;3D</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Open -->
+    <section class="block open" id="open" data-theme="dark" aria-labelledby="open-title">
+      <div class="wrap open__grid">
+        <div>
+          <p class="label reveal"><span class="label__n">06</span>Код</p>
+          <h2 class="h2 reveal" id="open-title">Выкладываем всё<br>с&nbsp;первого коммита.</h2>
+          <p class="lead reveal">В&nbsp;репозитории схемы, код для&nbsp;ПЛИС и&nbsp;микроконтроллера и&nbsp;дневник с&nbsp;замерами и&nbsp;тупиками. Железо под&nbsp;<span class="nowrap">CERN-OHL-S-2.0</span>, код под&nbsp;MIT: можете менять его и&nbsp;выпускать свою версию.</p>
+          <div class="actions reveal">
+            <a class="btn btn--paper" href="https://github.com/fabbit-dev/fabbit/subscription" target="_blank" rel="noopener">Следить за&nbsp;разработкой</a>
+            <a class="btn btn--line" href="https://github.com/fabbit-dev/fabbit/tree/main/journal" target="_blank" rel="noopener">Дневник</a>
+          </div>
+        </div>
+        <figure class="tree reveal" translate="no">
+          <figcaption class="sr-only">Структура репозитория</figcaption>
+<pre><span class="t3">fabbit/</span>
+├── gateware/   <span class="t3">ПЛИС</span>
+├── firmware/   <span class="t3">микроконтроллер</span>
+├── profiles/   <span class="t3">содержимое карты памяти</span>
+├── hardware/   <span class="t3">платы и корпус</span>
+│   ├── mainboard/
+│   ├── adc-mezzanine/
+│   ├── panel-adapter/
+│   └── case/
+├── host/       <span class="t3">утилиты для ПК</span>
+└── journal/    <span class="t3">дневник</span></pre>
+        </figure>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer" data-theme="light">
+    <div class="wrap runner-wrap">
+      <!-- на широком экране дорожка во всю ширину страницы, на телефоне — по полям; заяц выбегает из-за её левого края -->
+      <div class="runner" aria-hidden="true">
+        <img class="runner__bunny pixel" src="/brand/anim/run-ink.svg" width="48" height="36" alt="">
+        <div class="runner__track"></div>
+      </div>
+    </div>
+    <div class="wrap footer__row">
+      <img class="pixel" src="/brand/fabbit-logo-ink.svg" width="92" height="31" alt="" translate="no">
+      <p class="tech"><span class="nowrap"><span translate="no">fabbit.dev</span> · 2026 ·</span> <span class="nowrap">код MIT · железо CERN-OHL-S-2.0</span></p>
+      <a class="tech footer__top" href="#top">Наверх <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

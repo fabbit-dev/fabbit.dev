@@ -1,0 +1,76 @@
+/* Tailwind только для острова «Из чего сделан»: тема и утилиты без preflight,
+   чтобы не сбрасывать базовые стили остального сайта (src/style.css). */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@source "./";
+@source "../components";
+
+/* Та же граница, что у остального сайта (max-width: 860px): md включается с 861 px. */
+@theme { --breakpoint-md: 861px; }
+
+/* Токены shadcn → токены бренда (src/style.css). Тёмные главы переопределяют --fb-*. */
+@theme inline {
+  --color-background: var(--fb-white);
+  --color-foreground: var(--fb-ink);
+  --color-card: var(--fb-white);
+  --color-card-foreground: var(--fb-ink);
+  --color-muted: var(--fb-surface);
+  --color-muted-foreground: var(--fb-text-3);
+  --color-border: var(--fb-line);
+  --color-ring: var(--fb-ink);
+  --color-primary: var(--fb-ink);
+  --color-primary-foreground: var(--fb-white);
+  --color-secondary: var(--fb-surface);
+  --color-secondary-foreground: var(--fb-ink);
+  --color-accent: var(--fb-surface);
+  --color-accent-foreground: var(--fb-ink);
+  --font-sans: var(--fb-font-text);
+  --font-mono: var(--fb-font-tech);
+}
+
+/* Без preflight рамкам нужен стиль и цвет, иначе border-* из утилит не рисуется. */
+@layer base {
+  .build *, .build ::before, .build ::after { border: 0 solid var(--color-border); }
+}
+
+/* Глобальные a и code в style.css не в слоях и сильнее утилит, поэтому правим их тут. */
+.build a { color: inherit; text-decoration: none; }
+/* шапка главы: заголовок слева, лид справа по нижнему краю — экономит высоту, глава влезает в экран */
+.build__head { display: grid; gap: var(--s4); margin-bottom: var(--s5); }
+.build__head .h2, .build__head .label { margin-bottom: 0; }
+.build__head .label { margin-bottom: var(--s5); }
+@media (min-width: 861px) { .build__head { grid-template-columns: 1fr 1fr; align-items: end; } }
+@media (max-width: 860px) { .build__head .label { margin-bottom: var(--s4); } }   /* ритм телефона: метка → 16 → заголовок */
+
+/* Пиксельный Artix-7 в блоке ПЛИС дрожит, полоски разлетаются во все стороны: чип будто вылетает из экрана.
+   Чип и полоски в одной сетке: --cell = 2 px, чип 56 клеток (112 px), сцена 200×120.
+   Пока плитка вне экрана (data-running="false"), всё стоит. */
+.chip-flight { --cell: 2px; position: relative; margin: 0; width: 100%; min-height: calc(64 * var(--cell)); display: grid; place-items: center; color: #fff; overflow: hidden; }
+
+.chip-flight__stage { position: relative; width: calc(56 * var(--cell)); height: calc(56 * var(--cell)); }
+.chip-flight__chip { position: absolute; inset: 0; width: 100%; height: 100%; animation: chip-shake .36s steps(1) infinite; }
+.chip-flight__fx { position: absolute; left: calc(-72 * var(--cell)); top: calc(-32 * var(--cell)); width: calc(200 * var(--cell)); height: calc(120 * var(--cell)); overflow: visible; }
+/* полоска отъезжает от чипа вдоль своего направления и гаснет */
+.chip-flight__ray { transform-box: fill-box; transform-origin: top; animation: chip-ray 1s cubic-bezier(.55, 0, 1, .6) infinite; opacity: 0; }
+.chip-flight[data-running="false"] * { animation-play-state: paused; }
+/* разгон наружу: медленно у чипа, быстро и длинно у края, как при приближении */
+@keyframes chip-ray {
+  0% { transform: translateY(0) scaleY(.2); opacity: 0; }
+  15% { opacity: 1; }
+  80% { opacity: .9; }
+  100% { transform: translateY(46px) scaleY(2.4); opacity: 0; }
+}
+/* дрожь на целые клетки, чтобы пиксели не мылились */
+@keyframes chip-shake {
+  0% { transform: translate(0, 0); }
+  17% { transform: translate(var(--cell), calc(-1 * var(--cell))); }
+  33% { transform: translate(calc(-1 * var(--cell)), 0); }
+  50% { transform: translate(0, var(--cell)); }
+  67% { transform: translate(var(--cell), 0); }
+  83% { transform: translate(0, calc(-1 * var(--cell))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip-flight__ray { animation: none; opacity: .5; }
+  .chip-flight__chip { animation: none; }
+}

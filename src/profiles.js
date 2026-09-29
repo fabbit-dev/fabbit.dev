@@ -1,0 +1,32 @@
+// Профили прибора: список на странице и экран в 3D берут их отсюда.
+// Отдельный файл, чтобы список рисовался сразу, а экран (screen.js) грузился вместе с 3D.
+// name и desc двуязычные: { ru, en }, язык выбирает pick() из i18n.js.
+export const PROFILES = [
+  { id: 'logic',
+    name: { ru: 'Логический анализатор', en: 'Logic analyzer' },
+    desc: { ru: 'Читает цифровые каналы с гребёнки и отдаёт запись в sigrok.', en: 'Reads digital channels from the header and exports captures to sigrok.' } },
+  { id: 'scope',
+    name: { ru: 'Осциллограф', en: 'Oscilloscope' },
+    desc: { ru: 'Снимает сигнал с двух входов SMA через мезонин АЦП.', en: 'Samples two SMA inputs through the ADC mezzanine.' } },
+  { id: 'retro',
+    name: { ru: 'Ретро-консоль', en: 'Retro console' },
+    desc: { ru: 'Собирает в ПЛИС схему приставки и выводит картинку по HDMI.', en: 'Builds a game console circuit inside the FPGA and outputs video over HDMI.' } },
+  { id: 'neural',
+    name: { ru: 'Нейроускоритель', en: 'Neural accelerator' },
+    desc: { ru: 'Запускает небольшие нейросети на логике ПЛИС.', en: 'Runs small neural networks on FPGA logic.' } },
+  { id: 'tdr',
+    name: { ru: 'Рефлектометр', en: 'Cable tester' },
+    desc: { ru: 'Шлёт импульс в кабель и по эху находит обрыв.', en: 'Sends a pulse down a cable and finds the break by its echo.' } },
+  { id: 'bus',
+    name: { ru: 'Анализатор шин', en: 'Bus analyzer' },
+    desc: { ru: 'Разбирает пакеты I²C, SPI и UART на лету.', en: 'Decodes I²C, SPI and UART packets on the fly.' } },
+  { id: 'programmer',
+    name: { ru: 'Программатор', en: 'Programmer' },
+    desc: { ru: 'Прошивает микросхемы памяти и ПЛИС через гребёнку.', en: 'Flashes memory chips and FPGAs through the header.' } },
+  { id: 'glitch',
+    name: { ru: 'Глитчер', en: 'Glitcher' },
+    desc: { ru: 'Даёт точные сбои питания и тактов, чтобы проверить защиту чипа.', en: 'Injects precise power and clock glitches to test a chip’s defenses.' } },
+  { id: 'terminal',
+    name: { ru: 'Терминал', en: 'Terminal' },
+    desc: { ru: 'Открывает последовательную консоль без ноутбука.', en: 'Opens a serial console without a laptop.' } },
+];

@@ -1,0 +1,6 @@
+node_modules
+dist
+scripts/out/
+__pycache__/
+.DS_Store
+.claude/

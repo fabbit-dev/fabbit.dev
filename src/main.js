@@ -37,10 +37,14 @@ if (webglOK()) {
 // Телефон: высота полосы прибора (CSS --stage-h) = экран минус самая высокая карточка текста.
 // Карточки прижаты к низу, прибору остаётся всё свободное место сверху.
 let stageH = innerHeight, storyTail = 0;
+// Низ карточек текста, px: они прижаты к 100svh. innerHeight на телефоне растёт, когда прячется панель адреса,
+// и всё, что считалось от него (подписи, прибор), съезжало на текст. Полоса прибора сама высотой 100svh.
+let svhPx = innerHeight;
 const nat = {};   // телефон: высота текста глав истории, по id секции
 const root = document.documentElement.style;
 function layoutStage() {
-  if (!mobile()) { for (const v of ['--stage-h', '--nat-profiles', '--nat-blueprint', '--canvas-h']) root.removeProperty(v); stageH = innerHeight; storyTail = 0; bandBg(); return; }
+  if (!mobile()) { for (const v of ['--stage-h', '--nat-profiles', '--nat-blueprint', '--canvas-h']) root.removeProperty(v); stageH = svhPx = innerHeight; storyTail = 0; bandBg(); return; }
+  svhPx = $('.stage').offsetHeight || innerHeight;
   // hero тоже карточка: логотип, заголовок и кнопки должны влезть под полосу с запасом 24 px снизу
   // по offsetTop: анимация появления сдвигает блоки transform-ом и сбила бы замер
   const brand = $('.hero__brand'), actions = $('.hero .actions');
@@ -57,7 +61,7 @@ function layoutStage() {
   root.setProperty('--nat-profiles', `${nat.profiles}px`);
   root.setProperty('--nat-blueprint', `${nat.blueprint}px`);
   // холст кончается над самым коротким текстом: ниже него только текст, и касания уходят к нему
-  root.setProperty('--canvas-h', `${innerHeight - Math.min(hero, ...cards)}px`);
+  root.setProperty('--canvas-h', `${svhPx - Math.min(hero, ...cards)}px`);
   // полоса во всю высоту уезжает вместе с последней главой, как только та начинает уходить
   storyTail = 0;
   bandBg();
@@ -66,9 +70,19 @@ function layoutStage() {
 // тёмный лист идёт быстрее прокрутки и закрывает полосу целиком ровно тогда, когда карточка главы встаёт
 // под полосу (E: от низа экрана до 0). На выходе так же быстрее поднимается белый лист следующей главы (F).
 // Ниже края главы фон не рисуется: там текст карточки, он лежит под холстом.
+// Стили пишутся, только когда изменились: маска на холсте перерисовывает весь его слой,
+// а вне «Профилей» и hero градиент и маска на каждом шаге прокрутки одни и те же.
+const bandPrev = { bg: null, mask: null };
+function setBand(bg, mask, composite = '') {
+  if (bg !== bandPrev.bg) { bandPrev.bg = bg; $('.stage').style.background = bg; }
+  if (mask === bandPrev.mask) return;
+  bandPrev.mask = mask;
+  const gl = $('#gl').style;
+  gl.maskImage = gl.webkitMaskImage = mask;
+  gl.maskComposite = composite === 'source-in' ? 'intersect' : ''; gl.webkitMaskComposite = composite;
+}
 function bandBg() {
-  const stage = $('.stage');
-  if (!mobile()) { stage.style.background = ''; $('#gl').style.maskImage = $('#gl').style.webkitMaskImage = ''; return; }
+  if (!mobile()) { setBand('', ''); return; }
   const r = $('#profiles').getBoundingClientRect(), vh = innerHeight, H = stageH;
   const fast = (edge) => Math.round(Math.max(0, vh * (edge - H) / (vh - H)));
   const W = '#fff', D = '#0A0A0A';
@@ -81,18 +95,17 @@ function bandBg() {
   }
   else if (r.bottom < vh) { const F = fast(r.bottom); g = `${D} ${F}px, ${W} ${F}px ${Math.round(r.bottom)}px, transparent ${Math.round(r.bottom)}px`; }
   else g = `${D} ${H}px, transparent ${H}px`;
-  stage.style.background = `linear-gradient(${g})`;
+  const bg = `linear-gradient(${g})`;
   // Под полосой холст прозрачный, но в hero и «Профилях» прибор обрезан по низу полосы, как раньше:
   // иначе растущий к экрану корпус лёг бы на текст hero, а в профилях под экраном торчал бы корпус.
   // Когда «Профили» уезжают вверх, обрезка плавно опускается до низа холста — к «Разборке» прибор снова целиком.
-  const canvasH = innerHeight - Math.min(...Object.values(nat));
+  const canvasH = svhPx - Math.min(...Object.values(nat));
   // выход из главы — от «карточка начала уезжать» (низ главы у низа экрана) до «глава ушла под полосу»
   // hero: край — верх заголовка; уезжая вверх, текст закрывает прибор снизу и не ложится на него
   const heroTop = $('.hero__title').getBoundingClientRect().top - 12;
   const clip = r.top > stageH ? Math.max(stageH, Math.min(canvasH, heroTop))
     : r.bottom >= innerHeight ? stageH : r.bottom <= stageH ? canvasH
     : stageH + (canvasH - stageH) * (innerHeight - r.bottom) / (innerHeight - stageH);
-  const gl = $('#gl').style;
   // На подходе к «Профилям» и выходе из них корпус не растворяется в серую муть, а «сжимается в экран»:
   // маска сужается до прямоугольника плоского экрана (и расширяется обратно на выходе)
   const approach = r.top > stageH && r.top < innerHeight ? (innerHeight - r.top) / (innerHeight - stageH) : 0;
@@ -103,23 +116,26 @@ function bandBg() {
     const x0 = f.x0 - mg, x1 = f.x1 + mg, y0 = f.y0 - mg, y1 = Math.min(f.y1 + mg, clip);
     const mx = `linear-gradient(to right, transparent ${x0 - e}px, #000 ${x0}px, #000 ${x1}px, transparent ${x1 + e}px)`;
     const my = `linear-gradient(transparent ${y0 - e}px, #000 ${y0}px, #000 ${y1 - e}px, transparent ${y1}px)`;
-    gl.maskImage = gl.webkitMaskImage = `${mx}, ${my}`;
-    gl.maskComposite = 'intersect'; gl.webkitMaskComposite = 'source-in';
+    setBand(bg, `${mx}, ${my}`, 'source-in');
     return;
   }
   // край обрезки — мягкий: корпус растворяется на 56 px, а не режется ровной линией
-  const m = clip < canvasH ? `linear-gradient(#000 ${Math.round(clip - 56)}px, transparent ${Math.round(clip)}px)` : '';
-  gl.maskImage = m; gl.webkitMaskImage = m; gl.maskComposite = gl.webkitMaskComposite = '';
+  setBand(bg, clip < canvasH ? `linear-gradient(#000 ${Math.round(clip - 56)}px, transparent ${Math.round(clip)}px)` : '');
 }
 // Где на телефоне стоит плоский экран профилей (#stage-screen): поля 16 px, сверху шапка + 12, снизу текст главы, 4 : 3.
 // Те же числа берёт поза прибора K.profiles в init3D.
 function flatRect() {
-  const top = nav.getBoundingClientRect().bottom + 12, boxH = innerHeight - nat.profiles - top - 16;
+  const top = nav.getBoundingClientRect().bottom + 12, boxH = svhPx - nat.profiles - top - 16;
   const w = Math.min(innerWidth - 32, boxH * 4 / 3), h = w * 3 / 4;
   const x0 = (innerWidth - w) / 2, y0 = top + (boxH - h) / 2;
   return { x0, x1: x0 + w, y0, y1: y0 + h };
 }
-addEventListener('scroll', () => { if (mobile()) bandBg(); }, { passive: true });
+// не чаще кадра: событий прокрутки на телефоне бывает больше, чем кадров
+let bandRaf = 0;
+addEventListener('scroll', () => {
+  if (bandRaf || !mobile()) return;
+  bandRaf = requestAnimationFrame(() => { bandRaf = 0; bandBg(); });
+}, { passive: true });
 layoutStage();
 let rebuild3D = () => {};   // init3D подменяет: позы прибора зависят от высот текста
 document.fonts?.ready.then(() => { layoutStage(); ScrollTrigger.refresh(); rebuild3D(); });
@@ -328,27 +344,33 @@ const revealIn = (root) => {
   if (reduced || !els.length) return;
   ScrollTrigger.batch(els, { start: 'top 88%', once: true, onEnter: (batch) => gsap.to(batch, SHOW) });
 };
+// раскладка телефона, как в CSS и isPhoneLayout
+const PHONE_MQ = '(max-width: 860px) and ((orientation: portrait) or (min-height: 501px))';
+// Телефон: карточка главы гаснет вместе с прокруткой — начинает на 60 px раньше, чем тронется с места,
+// и пропадает, поднявшись на 40 px, до того как зайдёт под прибор. Назад проявляется так же, без рывка по времени.
+// Последняя глава уезжает вместе со страницей, её текст не гаснет. Прозрачность, не движение: и при reduced-motion.
+gsap.matchMedia().add(PHONE_MQ, () => {
+  for (const sec of $$('#story .scene:not(.hero):not(#blueprint)')) {
+    gsap.fromTo($('.sticky .wrap', sec), { opacity: 1 }, {
+      opacity: 0, ease: 'none', immediateRender: false,
+      scrollTrigger: { trigger: sec, start: () => `bottom ${innerHeight + 60}px`, end: () => `bottom ${innerHeight - 40}px`, scrub: true },
+    });
+  }
+});
 if (!reduced) {
   gsap.to('.hero .reveal', { ...SHOW, delay: 0.15 });
   // телефон: текст hero гаснет в первые 120 px прокрутки — до того, как к нему подойдут прибор и тёмная шторка
-  gsap.matchMedia().add('(max-width: 860px) and ((orientation: portrait) or (min-height: 501px))', () => {
+  gsap.matchMedia().add(PHONE_MQ, () => {
     gsap.to('.hero__inner', { opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: '+=120', scrub: true } });
   });
   // Главы-истории: текст появляется при входе и прячется, если вернуться выше.
-  // На телефоне он ещё и гаснет перед уходом под полосу прибора, чтобы не резаться о её край.
+  // Уход на телефоне ведёт прокрутка (PHONE_MQ выше), не таймер: тот двигал заголовок вниз на 24 px, и он прыгал.
   $$('.scene:not(.hero)').forEach((sec) => {
     const els = $$('.reveal', sec);
-    const card = $('.sticky .wrap', sec);
     ScrollTrigger.create({
       trigger: sec, start: () => (mobile() ? 'top 85%' : 'top 60%'),
-      // карточка тянется до низа экрана: текст гаснет, когда она уже приподнялась на 80 px — снизу в это время
-      // подъезжает следующая глава, пустого экрана между ними нет
-      end: () => (mobile() ? `bottom ${stageH + card.offsetHeight - 80}px` : 'bottom top'),
       onEnter: () => gsap.to(els, SHOW),
       onLeaveBack: () => gsap.to(els, HIDE),
-      // последняя глава уезжает вместе со страницей: следом сразу идёт блок «Устройство», пустого экрана нет
-      onLeave: () => { if (mobile() && sec.id !== 'blueprint') gsap.to(els, HIDE); },
-      onEnterBack: () => gsap.to(els, SHOW),
     });
   });
   $$('.block').forEach(revealIn);
@@ -438,7 +460,7 @@ async function init3D() {
   // Прибор вписывается в полосу между навигацией и её нижним краем, с местом под подсказку.
   // key — глава: прибор до верха её текста; без key (hero) — до низа непрозрачной полосы
   // запас снизу — под подпись детали или подсказку; в hero их нет, прибор встаёт почти вплотную к заголовку
-  const band = (key) => ({ top: nav.getBoundingClientRect().bottom, bottom: (key ? innerHeight - nat[key] : stageH) - (key === 'hero' ? 8 : 40), frameH: frameH(), pad: 16 });
+  const band = (key) => ({ top: nav.getBoundingClientRect().bottom, bottom: (key ? svhPx - nat[key] : stageH) - (key === 'hero' ? 8 : 40), frameH: frameH(), pad: 16 });
   // Телефон на боку: кадр низкий, прибор вписывается по высоте между шапкой и низом экрана,
   // а не стоит на фиксированной высоте (иначе верх уходит под навигацию)
   const fitLow = (pose, silhouette) => (isLandscapePhone(innerWidth, innerHeight)
@@ -454,7 +476,7 @@ async function init3D() {
         const b = band('profiles');
         // Экран в 3D встаёт ровно туда, где его сменит плоский холст (#stage-screen: поля 16 px,
         // сверху шапка + 12, 4 : 3) — тогда смена незаметна. Корпус шире экрана и уходит за края кадра.
-        const padTop = b.top + 12, boxH = innerHeight - nat.profiles - padTop - 16;
+        const padTop = b.top + 12, boxH = svhPx - nat.profiles - padTop - 16;
         const wFlat = Math.min(innerWidth - 32, boxH * 4 / 3);
         const wScreen = wFlat * 70 / 68;                    // модуль 70 мм, видимая часть экрана 68 мм
         const dev = wScreen / 70 * 150;                                                 // высота корпуса, px
@@ -507,7 +529,7 @@ async function init3D() {
     // Телефон: всё, пока карточка стоит под полосой и до начала чертежа; разлёт и разворот идут быстрее,
     // а остаток прибор стоит спиной, и рядом по очереди подписываются главные детали (phoneSpan).
     const Dr = phone ? Math.min(h('#device') - $('#device .sticky .wrap').offsetHeight, B - vh - (D - at)) : h('#device') - vh;
-    const [b1, c0, c1] = phone ? [0.18, 0.22, 0.45] : [0.35, 0.42, 0.88];
+    const [b1, c0, c1] = phone ? [0.14, 0.18, 0.38] : [0.35, 0.42, 0.88];
     seg('devA', 'devB', D - at, D - at + Dr * b1, 'power3.out');
     seg('devB', 'devC', D - at + Dr * c0, D - at + Dr * c1);
     const storyTop = story.getBoundingClientRect().top + scrollY;
@@ -667,7 +689,7 @@ async function init3D() {
         // выноска опускается к ней от детали отвесно
         el.style.opacity = vis; leaders[i].style.opacity = vis; dots[i].style.opacity = vis;
         if (vis <= 0.001) continue;
-        const px = Math.max(16 + w / 2, Math.min(vw - 16 - w / 2, c[0])), py = innerHeight - nat.device + 8 - h;
+        const px = Math.max(16 + w / 2, Math.min(vw - 16 - w / 2, c[0])), py = svhPx - nat.device + 8 - h;
         el.classList.remove('is-left');
         el.style.transform = `translate(${(px - w / 2) | 0}px, ${py | 0}px)`;
         leaders[i].setAttribute('points', `${c[0]},${c[1]} ${c[0]},${py - 6} ${px},${py - 6}`);
@@ -676,8 +698,10 @@ async function init3D() {
       }
       const tx = Math.max(6, Math.min(gridRight - w, want));
       // узкий экран: подпись легла бы на колонку текста или, упёршись в край кадра, на сам прибор
-      const onDevice = left ? tx + w > data.box[0] - 8 : tx < data.box[1] + 8;
-      if (tx < textRight + 16 || (tx !== want && onDevice)) vis = 0;
+      // не обрываем разом, а гасим на 40 px наезда: подпись у границы не мигает при прокрутке
+      const overText = textRight + 16 - tx;
+      const overDevice = tx === want ? 0 : left ? tx + w - (data.box[0] - 8) : data.box[1] + 8 - tx;
+      vis *= Math.max(0, Math.min(1, 1 - Math.max(overText, overDevice) / 40));
       el.style.opacity = vis;
       leaders[i].style.opacity = vis; dots[i].style.opacity = vis;
       if (vis <= 0.001) continue;

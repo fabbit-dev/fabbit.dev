@@ -230,14 +230,15 @@ section[id] { scroll-margin-top: calc(var(--nav-h) + var(--s3)); }
 .callout {
   position: absolute; left: 0; top: 0;
   font-family: var(--fb-font-tech); font-size: var(--t-mono); line-height: 1.3;
-  white-space: nowrap; color: #0A0A0A;
+  width: max-content; max-width: 200px; color: #0A0A0A;   /* длинная подпись в две строки: иначе не влезает между текстом и прибором */
   opacity: 0; will-change: transform, opacity;
 }
 .callout b { font-weight: 500; display: block; }
 .callout span { color: #737373; display: block; }
 .callout.is-left { text-align: right; }
 /* узкий широкий экран (1024 и около): между текстом и прибором мало места — подписи переносятся в две строки */
-@media (max-width: 1279px) { .callout { white-space: normal; width: max-content; max-width: 150px; } }
+@media (max-width: 1439px) { .callout { max-width: 170px; } }
+@media (max-width: 1279px) { .callout { max-width: 150px; } }
 
 .scene, .block, .footer { position: relative; background: var(--fb-white); color: var(--fb-ink); }
 .scene .wrap { position: relative; z-index: 2; }
@@ -445,7 +446,7 @@ html.snap { scroll-snap-type: y mandatory; }
 
   /* главы-истории короче: на телефоне то же самое за меньшее число экранов */
   .profiles { height: 300svh; }
-  .device { height: 175svh; }   /* разлёт, разворот и пять подписей по очереди */
+  .device { height: 250svh; }   /* разлёт, разворот и четыре подписи по очереди, ~220 px прокрутки на каждую */
   .blueprint { height: 110svh; }
   /* карточка текста липнет сразу под полосой прибора: приходит вслед за прошлой главой, без пустых экранов */
   .sticky { top: var(--stage-h); height: auto; display: block; overflow: visible; }

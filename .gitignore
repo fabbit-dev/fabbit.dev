@@ -4,3 +4,7 @@ scripts/out/
 __pycache__/
 .DS_Store
 .claude/
+
+# воркер донатов
+worker/.wrangler/
+worker/.dev.vars

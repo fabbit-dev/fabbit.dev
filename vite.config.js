@@ -48,5 +48,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
+    // у воркера донатов свои тесты в рантайме Workers: cd worker && npm test
+    exclude: ['**/node_modules/**', 'worker/**'],
   },
 });

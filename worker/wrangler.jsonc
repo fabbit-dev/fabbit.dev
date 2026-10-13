@@ -1,0 +1,19 @@
+// Воркер донатов fabbit.dev: заявка до оплаты, приём уведомлений ЮMoney, статистика.
+// Секрет YOOMONEY_SECRET только через `wrangler secret put`, в этот файл не пишем.
+{
+  "name": "fabbit-donate",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": false,
+  "routes": [{ "pattern": "donate.fabbit.dev", "custom_domain": true }],
+  "vars": { "ALLOWED_ORIGIN": "https://fabbit.dev" },
+  "d1_databases": [
+    // database_id выдаст `wrangler d1 create fabbit-donate` (README)
+    { "binding": "DB", "database_name": "fabbit-donate", "database_id": "00000000-0000-0000-0000-000000000000" }
+  ],
+  // заявки: 10 в минуту с одного IP
+  "ratelimits": [{ "name": "REGISTER_LIMIT", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
+  // раз в сутки удаляем неоплаченные заявки старше суток
+  "triggers": { "crons": ["17 3 * * *"] },
+  "observability": { "enabled": true }
+}

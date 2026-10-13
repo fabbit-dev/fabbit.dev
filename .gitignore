@@ -8,3 +8,4 @@ __pycache__/
 # воркер донатов
 worker/.wrangler/
 worker/.dev.vars
+.env*.local

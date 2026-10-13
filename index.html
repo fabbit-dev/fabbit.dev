@@ -40,6 +40,7 @@
       <a href="#how">Начинка</a>
       <a href="#team">Команда</a>
       <a href="#open">Код</a>
+      <a href="#support">Поддержать</a>
     </nav>
     <div class="nav__end">
       <a class="nav__lang" href="/en/" hreflang="en" lang="en" aria-label="English version" onclick="try{localStorage.setItem('fabbit-lang','en')}catch(e){}">EN</a>
@@ -57,6 +58,7 @@
         <li><a href="#how"><span class="menu__n">04</span>Начинка</a></li>
         <li><a href="#team"><span class="menu__n">05</span>Команда</a></li>
         <li><a href="#open"><span class="menu__n">06</span>Код</a></li>
+        <li><a href="#support"><span class="menu__n">07</span>Поддержать</a></li>
       </ol>
     </nav>
     <div class="menu__foot">
@@ -87,7 +89,7 @@
           <p class="lead hero__lead reveal">Осциллограф, анализатор и&nbsp;<span class="nowrap">ретро-консоль</span> в&nbsp;одном&nbsp;корпусе. Сделано школьниками.</p>
           <div class="actions reveal">
             <a class="btn btn--ink" href="https://github.com/fabbit-dev/fabbit" target="_blank" rel="noopener">Исходники на GitHub</a>
-            <a class="btn" href="#profiles">Профили <span aria-hidden="true">↓</span></a>
+            <a class="btn" href="#support">Поддержать <span aria-hidden="true">↓</span></a>
           </div>
         </div>
         <!-- рендер корпуса: заставка, пока грузится 3D, и замена ему без WebGL (main.js) -->
@@ -202,6 +204,56 @@
 ├── host/       <span class="t3">утилиты для ПК</span>
 └── journal/    <span class="t3">дневник</span></pre>
         </figure>
+      </div>
+    </section>
+    <!-- 8. Поддержать: форма уходит в ЮMoney, имя и сообщение — в воркер donate.fabbit.dev (src/donate.js, worker/) -->
+    <section class="block support" id="support" data-theme="light" aria-labelledby="support-title">
+      <div class="wrap support__grid">
+        <div>
+          <p class="label reveal"><span class="label__n">07</span>Поддержать</p>
+          <h2 class="h2 reveal" id="support-title">Помогите собрать Fabbit.</h2>
+          <p class="lead reveal">Деньги идут на&nbsp;платы, детали и&nbsp;корпус. Каждую трату публикуем.</p>
+          <form class="donate reveal" id="donate-form" action="https://yoomoney.ru/quickpay/confirm" method="POST" accept-charset="utf-8">
+            <input type="hidden" name="receiver" value="4100119646671169">
+            <input type="hidden" name="quickpay-form" value="button">
+            <input type="hidden" name="paymentType" value="AC">
+            <input type="hidden" name="label" value="">
+            <input type="hidden" name="successURL" value="https://fabbit.dev/thanks/">
+            <div class="field">
+              <label class="field__label tech" for="donate-sum">Сумма, от&nbsp;100 до&nbsp;15&nbsp;000&nbsp;₽</label>
+              <input class="field__input sum__input" id="donate-sum" name="sum" type="text" inputmode="numeric" pattern="[0-9 ]*" value="500" required autocomplete="off" aria-describedby="donate-sum-error">
+              <div class="pick tech" role="group" aria-label="Быстрый выбор суммы">
+                <button type="button" data-sum="300">300</button>
+                <button type="button" data-sum="500">500</button>
+                <button type="button" data-sum="1000">1000</button>
+                <button type="button" data-sum="5000">5000</button>
+              </div>
+              <p class="field__error" id="donate-sum-error" data-sum-error hidden>Целое число от&nbsp;100 до&nbsp;15&nbsp;000&nbsp;₽</p>
+            </div>
+            <div class="field">
+              <label class="field__label tech" for="donate-name">Имя для списка</label>
+              <input class="field__input" id="donate-name" data-name type="text" maxlength="40" autocomplete="nickname" aria-describedby="donate-name-hint">
+              <p class="field__hint" id="donate-name-hint">Пустое поле: донат анонимный</p>
+            </div>
+            <div class="field">
+              <label class="field__label tech" for="donate-message">Сообщение</label>
+              <textarea class="field__input" id="donate-message" data-message maxlength="200" rows="2"></textarea>
+            </div>
+            <button class="btn btn--ink donate__pay" type="submit">Перейти к&nbsp;оплате</button>
+          </form>
+        </div>
+        <div class="stats reveal" id="donate-stats">
+          <p class="stats__label tech">Собрано</p>
+          <p class="stats__total" data-total aria-live="polite"></p>
+          <a class="stats__link tech" href="/spent/">Куда ушли деньги <span aria-hidden="true">→</span></a>
+          <p class="field__hint" data-error hidden>Статистика не&nbsp;загрузилась. Оплата работает.</p>
+          <div class="pick stats__sort tech" role="group" aria-label="Донатеры">
+            <button type="button" data-sort="top" aria-pressed="true">Топ</button>
+            <button type="button" data-sort="recent" aria-pressed="false">Недавние</button>
+          </div>
+          <ol class="ledger tech" data-list></ol>
+          <button class="stats__more tech" type="button" data-more hidden>Показать ещё</button>
+        </div>
       </div>
     </section>
   </main>

@@ -361,6 +361,75 @@ html.snap { scroll-snap-type: y mandatory; }
 .person__role { margin: 0; font-size: var(--t-body); line-height: var(--lh-body); color: var(--fb-text-2); text-wrap: balance; }
 .person__age { font-size: var(--t-mono-s); color: var(--fb-text-3); letter-spacing: .06em; text-transform: uppercase; }
 
+/* ── поддержать: форма слева, ведомость справа. Без плашек: линии и моноширинные цифры.
+   Отступы как в остальных главах: внутри группы --s2, между группами --s6. ── */
+.support__grid { display: grid; grid-template-columns: 6fr 5fr; gap: var(--s8); align-items: start; }
+.donate { display: grid; gap: var(--s6); max-width: 30em; margin-top: var(--s6); }
+.field { display: grid; gap: var(--s2); }
+.field__label { font-size: var(--t-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--fb-text-3); }
+/* поле: только нижняя линия; 16 px, чтобы iOS не зумил при фокусе */
+.field__input {
+  width: 100%; padding: var(--s2) 0; border: 0; border-bottom: 1px solid var(--fb-line); border-radius: 0;
+  font: inherit; font-size: 16px; line-height: var(--lh-body); color: var(--fb-ink); background: transparent;
+  transition: border-color var(--dur);
+}
+.field__input:hover { border-bottom-color: var(--fb-text-3); }
+.field__input:focus { outline: none; border-bottom-color: var(--fb-ink); }
+.field__input:focus-visible { box-shadow: 0 1px 0 var(--fb-ink); }
+textarea.field__input { resize: vertical; }
+.sum__input { font-family: var(--fb-font-tech); font-size: var(--t-h2); line-height: 1.1; letter-spacing: -.06em; }
+.field__hint, .field__error { margin: 0; font-size: var(--t-small); line-height: var(--lh-body); color: var(--fb-text-3); }
+.field__error { color: #B42318; }
+.donate__pay { justify-self: start; }
+
+/* выбор из нескольких: быстрые суммы, «Топ / Недавние». Подчёркнутый моноширинный текст, выбранное жирной линией */
+.pick { display: flex; flex-wrap: wrap; gap: 0 var(--s5); }
+.pick button {
+  min-height: 44px; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--t-mono); color: var(--fb-text-2);
+  text-decoration: underline; text-decoration-color: var(--fb-line); text-underline-offset: 4px;
+  transition: color var(--dur), text-decoration-color var(--dur);
+}
+@media (hover: hover) { .pick button:hover { color: var(--fb-ink); text-decoration-color: currentColor; } }
+.pick button[aria-pressed="true"] { color: var(--fb-ink); text-decoration-color: currentColor; text-decoration-thickness: 2px; }
+
+.stats { padding-top: var(--s5); border-top: 1px solid var(--fb-ink); }
+.stats__label { margin: 0; font-size: var(--t-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--fb-text-3); }
+.stats__total { min-height: 1em; margin: var(--s2) 0; font-family: var(--fb-font-tech); font-size: var(--t-display); line-height: 1; letter-spacing: -.06em; color: var(--fb-ink); }
+.stats__link { display: inline-flex; align-items: center; gap: var(--s1); min-height: 44px; font-size: var(--t-mono); color: var(--fb-ink); text-underline-offset: 4px; }
+.stats__sort { margin-top: var(--s6); }
+/* ведомость: имя ……… сумма; сообщение строкой ниже */
+.ledger { margin: var(--s2) 0 0; padding: 0; list-style: none; }
+.entry { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s2); padding: var(--s1) 0; font-size: var(--t-mono); }
+.entry::after { content: ""; order: 1; flex: 1; min-width: var(--s4); border-bottom: 1px dotted var(--fb-muted); }
+.entry__name { min-width: 0; overflow-wrap: anywhere; color: var(--fb-ink); }
+.entry__sum { order: 2; white-space: nowrap; color: var(--fb-text-2); }
+.entry__msg { order: 3; flex-basis: 100%; margin: var(--s1) 0 var(--s2); font-family: var(--fb-font-text); font-size: var(--t-small); line-height: var(--lh-body); color: var(--fb-text-2); overflow-wrap: anywhere; }
+.stats__more {
+  min-height: 44px; margin-top: var(--s2); padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--t-mono); color: var(--fb-ink); text-decoration: underline; text-underline-offset: 4px;
+}
+
+/* ── подстраницы донатов: «Траты», «Спасибо» ──────── */
+.subnav { display: flex; align-items: center; justify-content: space-between; min-height: 72px; }
+.subnav__logo { display: inline-flex; padding: var(--s2) 0; }
+.sub .nav__lang { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s2); font-size: var(--t-mono); color: var(--fb-text-3); text-decoration: none; }
+.sub__main { padding-top: var(--s7); padding-bottom: var(--section); }
+/* итоги строкой: три числа через тонкие линии */
+.spent__sums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: var(--s6) 0 var(--s7); border-top: 1px solid var(--fb-ink); }
+.spent__sums div { padding: var(--s4) var(--s4) 0 0; }
+.spent__sums div + div { padding-left: var(--s4); border-left: 1px solid var(--fb-line); }
+.spent__sums dt { font-size: var(--t-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--fb-text-3); }
+.spent__sums dd { margin: var(--s2) 0 0; font-family: var(--fb-font-tech); font-size: clamp(24px, 2.6vw, 40px); letter-spacing: -.05em; color: var(--fb-ink); overflow-wrap: anywhere; }
+.spent__scroll { overflow-x: auto; }
+.spent__table { width: 100%; border-collapse: collapse; font-size: var(--t-body); }
+.spent__table th { padding: var(--s2) var(--s3) var(--s2) 0; font-size: var(--t-mono); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; text-align: left; color: var(--fb-text-3); }
+.spent__table td { padding: var(--s3) var(--s3) var(--s3) 0; border-top: 1px solid var(--fb-line); vertical-align: top; }
+.spent__table td.tech { font-size: var(--t-mono); white-space: nowrap; color: var(--fb-text-2); }
+.spent__sum, .spent__table th:nth-child(3) { text-align: right; }
+.spent__receipt a { display: inline-flex; min-height: 44px; align-items: center; margin-block: -12px; color: var(--fb-ink); text-underline-offset: 4px; }
+.thanks .lead { margin-bottom: 0; }
+
 /* ── footer ───────────────────────────────────────── */
 .footer { padding: var(--s6) 0 var(--s5); border-top: 1px solid var(--fb-line); overflow: hidden; }
 /* высота дорожки — ровно заяц и зазор под ним: над ним нет пустой полосы */
@@ -467,6 +536,10 @@ html.snap { scroll-snap-type: y mandatory; }
   .pmeta { margin-top: var(--s2); }
 
   .open__grid { grid-template-columns: 1fr; gap: var(--s7); }
+  .support__grid { grid-template-columns: 1fr; gap: var(--s7); }
+  .spent__sums { grid-template-columns: 1fr; }
+  .spent__sums div, .spent__sums div + div { padding: var(--s3) 0; border-left: 0; }
+  .spent__sums div + div { border-top: 1px solid var(--fb-line); }
   .team__grid { gap: var(--s4); }
   .crew { gap: var(--s3); padding-top: var(--s5); }
   .person__avatar { width: 96px; height: 96px; }

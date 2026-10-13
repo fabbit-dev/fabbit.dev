@@ -31,7 +31,7 @@ describe.each(Object.keys(PAGES))('глава «Команда» в %s', (file) 
 
   it('стоит перед «Исходниками», номера глав идут подряд, есть в навигации', () => {
     const nums = [...doc.querySelectorAll('.label__n')].map((n) => n.textContent);
-    expect(nums).toEqual(['01', '02', '03', '05', '06']);
+    expect(nums).toEqual(['01', '02', '03', '05', '06', '07']);
     const ids = [...doc.querySelectorAll('main section[id]')].map((s) => s.id);
     expect(ids.indexOf('team')).toBe(ids.indexOf('open') - 1);
     expect(doc.querySelector('.nav__links a[href="#team"]')).not.toBeNull();

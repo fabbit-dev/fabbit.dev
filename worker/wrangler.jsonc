@@ -8,7 +8,7 @@
   "routes": [{ "pattern": "donate.fabbit.dev", "custom_domain": true }],
   "vars": { "ALLOWED_ORIGIN": "https://fabbit.dev" },
   "d1_databases": [
-    // database_id выдаст `wrangler d1 create fabbit-donate` (README)
+    // здесь нули; настоящий id только в wrangler.prod.jsonc (в .gitignore), README «Деплой воркера»
     { "binding": "DB", "database_name": "fabbit-donate", "database_id": "00000000-0000-0000-0000-000000000000" }
   ],
   // заявки: 10 в минуту с одного IP

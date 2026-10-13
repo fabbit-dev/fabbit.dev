@@ -32,8 +32,18 @@ Cloudflare `worker/` на `donate.fabbit.dev` хранит имена и сум�
 
 ### Деплой воркера
 
-Зона `fabbit.dev` должна быть в Cloudflare: поддомен `donate` воркер создаёт сам
-(`custom_domain` в `worker/wrangler.jsonc`). Записи GitHub Pages не меняются.
+Что нужно заранее:
+
+- Зона `fabbit.dev` в Cloudflare (DNS у неё уже на `*.ns.cloudflare.com`). Поддомен `donate`
+  воркер создаёт сам при `deploy` (`custom_domain` в `worker/wrangler.jsonc`) и выпускает
+  на него сертификат. Записи `donate` в DNS быть не должно: на хостнейм с CNAME Custom
+  Domain не встанет.
+- Записи GitHub Pages (`A` на `185.199.108–111.153`, `www` CNAME) оставьте серыми, DNS only.
+  Через прокси Cloudflare сайт попадёт под замедление в России.
+- Кошелёк ЮMoney именной или идентифицированный: с анонимного собирать нельзя.
+
+Бесплатного плана хватает: Workers 100 000 запросов в сутки, D1 5 млн чтений и 100 000
+записей строк в сутки, cron до 5 на аккаунт.
 
 ```bash
 cd worker
@@ -43,17 +53,28 @@ npx wrangler login
 npx wrangler d1 create fabbit-donate
 ```
 
-`d1 create` выдаёт `database_id`: впишите его в `worker/wrangler.jsonc` вместо нулей.
-Это не секрет, его можно коммитить.
+`d1 create` выдаёт `database_id`. В репозитории он не хранится: в `wrangler.jsonc` нули,
+настоящий id живёт в `wrangler.prod.jsonc`, файл в `.gitignore`. Соберите его из основного
+(и пересобирайте после каждой правки `wrangler.jsonc`):
 
 ```bash
-npx wrangler d1 migrations apply fabbit-donate --remote
-npx wrangler secret put YOOMONEY_SECRET
-npx wrangler deploy
+sed 's/00000000-0000-0000-0000-000000000000/<database_id>/' wrangler.jsonc > wrangler.prod.jsonc
 ```
 
+Все команды к Cloudflare ниже идут с `-c wrangler.prod.jsonc`. Тесты и `wrangler dev`
+работают с `wrangler.jsonc` и локальной базой.
+
+```bash
+npx wrangler d1 migrations apply fabbit-donate --remote -c wrangler.prod.jsonc
+npm run deploy
+npx wrangler secret put YOOMONEY_SECRET -c wrangler.prod.jsonc
+```
+
+`npm run deploy` (`wrangler deploy -c wrangler.prod.jsonc`) создаёт воркер и `donate.fabbit.dev`. Пока секрета нет, воркер отвечает на уведомления
+`400`. `secret put` спрашивает значение, сохраняет его и сразу выкатывает новую версию.
 Секрет берите в ЮMoney (следующий раздел). В репозиторий и `wrangler.jsonc` его не пишите.
-Логи: `npx wrangler tail`.
+Проверка: `curl https://donate.fabbit.dev/stats` отдаёт `{"total_kop":0,...}`.
+Логи: `npx wrangler tail -c wrangler.prod.jsonc`.
 
 ### Уведомления в ЮMoney
 
@@ -64,11 +85,15 @@ npx wrangler deploy
    Сменили секрет в ЮMoney: повторите `secret put`.
 
 ЮMoney засчитывает только ответ `200` и повторяет уведомление через 10 минут и через час.
+Адрес уведомлений у кошелька один.
+
+Комиссию ЮMoney вычитает из перевода: 3% с карты, 1% с кошелька. Сумма перевода от 2
+до 15 000 ₽. Тестового режима у формы нет: ЮKassa с тестовым магазином сюда не подходит.
 
 ### Тестовое уведомление
 
 Кнопка «Протестировать» в настройках шлёт тестовое уведомление. Воркер отвечает `200`
-и ничего не записывает. Держите открытым `npx wrangler tail`: в нём видно, что запрос дошёл.
+и ничего не записывает. Держите открытым `npx wrangler tail -c wrangler.prod.jsonc`: в нём видно, что запрос дошёл.
 Если в логе `bad sign`, ЮMoney прислал тест без подписи: адрес рабочий, проверьте приём скриптом ниже.
 
 Подписанное уведомление со своей суммой:
@@ -81,25 +106,41 @@ SECRET=<секрет> node scripts/notify.mjs https://donate.fabbit.dev 100.00
 Скрипт печатает `operation_id`. Сумма попадает в итог, поэтому после проверки удалите строку:
 
 ```bash
-npx wrangler d1 execute fabbit-donate --remote --command "DELETE FROM donations WHERE operation_id = 'manual-…'"
+npx wrangler d1 execute fabbit-donate --remote -c wrangler.prod.jsonc --command "DELETE FROM donations WHERE operation_id = 'manual-…'"
 ```
 
-Последняя проверка: настоящий платёж на 100 ₽ с сайта. Уведомление ЮMoney приходит из России.
+Последняя проверка: настоящий платёж на 100 ₽ с сайта. Деньги придут на ваш же кошелёк,
+потеряете только комиссию (3 ₽ с карты). Уведомление ЮMoney приходит из России.
 Если в `wrangler tail` его нет, адреса Cloudflare режет провайдер ЮMoney. Тогда
 `/yoomoney` придётся перенести на хостинг в России.
+
+### Настоящий платёж на локальном воркере
+
+Уведомление ЮMoney должно дойти до `wrangler dev`, поэтому нужен публичный адрес:
+быстрый туннель Cloudflare, без аккаунта.
+
+1. `cd worker && npx wrangler dev --port 8787`, в корне `npm run dev`.
+2. `cloudflared tunnel --url http://localhost:8787` печатает `https://….trycloudflare.com`.
+   Адрес меняется при каждом запуске.
+3. В настройках HTTP-уведомлений ЮMoney адрес `https://….trycloudflare.com/yoomoney`,
+   «Готово». «Показать секрет» → `YOOMONEY_SECRET` в `worker/.dev.vars`, перезапустите `wrangler dev`.
+4. «Протестировать»: в логе `wrangler dev` появится `POST /yoomoney`.
+5. На `http://localhost:5190/#support` 100 ₽ картой. После оплаты ЮMoney вернёт на
+   `fabbit.dev/thanks/`; донат смотрите на localhost.
+6. Верните в ЮMoney адрес `https://donate.fabbit.dev/yoomoney`.
 
 ### Модерация
 
 Спрятать имя и сообщение доната. Сумма остаётся в итоге, донат показан анонимом:
 
 ```bash
-npx wrangler d1 execute fabbit-donate --remote --command "UPDATE donations SET hidden = 1 WHERE operation_id = '…'"
+npx wrangler d1 execute fabbit-donate --remote -c wrangler.prod.jsonc --command "UPDATE donations SET hidden = 1 WHERE operation_id = '…'"
 ```
 
 Последние донаты с `operation_id`:
 
 ```bash
-npx wrangler d1 execute fabbit-donate --remote --command "SELECT operation_id, name, message, amount_kop FROM donations ORDER BY paid_at DESC LIMIT 20"
+npx wrangler d1 execute fabbit-donate --remote -c wrangler.prod.jsonc --command "SELECT operation_id, name, message, amount_kop FROM donations ORDER BY paid_at DESC LIMIT 20"
 ```
 
 ### Локально

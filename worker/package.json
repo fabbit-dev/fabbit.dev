@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "test": "vitest run",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy -c wrangler.prod.jsonc"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "^1.4.1",

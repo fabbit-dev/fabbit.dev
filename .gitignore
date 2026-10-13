@@ -9,3 +9,4 @@ __pycache__/
 worker/.wrangler/
 worker/.dev.vars
 .env*.local
+worker/wrangler.prod.jsonc

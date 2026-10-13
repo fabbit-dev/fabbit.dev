@@ -3,13 +3,11 @@ import { verifySign } from './sign.js';
 // Донаты fabbit.dev через ЮMoney.
 //   POST /register  сайт до оплаты: имя и сообщение → label для формы quickpay
 //   POST /yoomoney  HTTP-уведомление ЮMoney о переводе
-//   GET  /stats     итог, донатеры по сумме (по страницам), последние донаты
+//   GET  /stats     итог и список донатов: топ по сумме или недавние, по страницам
 const NAME_MAX = 40;
 const MESSAGE_MAX = 200;
 const BODY_MAX = 8192;        // уведомление ЮMoney меньше 1 КБ
-const PAGE_SIZE = 100;
 const PAGE_MAX = 1000;
-const RECENT = 10;
 const PENDING_TTL = 24 * 3600 * 1000;
 
 const json = (data, status = 200, headers = {}) =>
@@ -52,6 +50,9 @@ async function register(req, env) {
   return json({ label }, 200, h);
 }
 
+// id анонима: 4 hex-цифры, случайные, с operation_id не связаны
+const anonId = () => [...crypto.getRandomValues(new Uint8Array(2))].map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
 // Уведомление ЮMoney. 200 значит «принято», иначе ЮMoney повторит через 10 минут и через час.
 // Повтор с тем же operation_id ничего не меняет. Имя и сообщение берутся из заявки по label,
 // заявка после оплаты удаляется: второй платёж по тому же label идёт анонимно.
@@ -77,34 +78,48 @@ async function yoomoney(req, env) {
   const kop = Number(m[1]) * 100 + Number((m[2] ?? '').padEnd(2, '0'));
   const label = p.label ?? '';
   await env.DB.batch([
-    env.DB.prepare(`INSERT OR IGNORE INTO donations (operation_id, amount_kop, name, message, paid_at)
-      SELECT ?1, ?2, pending.name, pending.message, ?3 FROM (SELECT 1) LEFT JOIN pending ON pending.label = ?4`)
-      .bind(op, kop, p.datetime ?? '', label),
+    env.DB.prepare(`INSERT OR IGNORE INTO donations (operation_id, amount_kop, name, message, paid_at, anon)
+      SELECT ?1, ?2, pending.name, pending.message, ?3, ?5 FROM (SELECT 1) LEFT JOIN pending ON pending.label = ?4`)
+      .bind(op, kop, p.datetime ?? '', label, anonId()),
     env.DB.prepare('DELETE FROM pending WHERE label = ?').bind(label),
   ]);
   return new Response('ok');
 }
 
-// Итог, донатеры по сумме (страницы по 100, анонимы и скрытые не входят), последние донаты.
+// Итог и одна страница списка:
+//   sort=top     по сумме, по 100: суммы одного имени сложены, каждый анонимный донат отдельной строкой
+//   sort=recent  все донаты, новые сверху, по 50
+// Аноним (нет имени или hidden = 1): name = null, anon = случайный id. У скрытого message = null.
+// Страница с сообщениями тяжелее, поэтому меньше: ответ держим около 16 КБ (Cloudflare из России).
+const SHOWN = 'name IS NOT NULL AND hidden = 0';   // имя показываем; иначе строка анонимная, с anon
+const LISTS = {
+  top: { size: 100, sql: `SELECT name, NULL AS anon, SUM(amount_kop) AS amount_kop FROM donations WHERE ${SHOWN} GROUP BY name
+    UNION ALL SELECT NULL, anon, amount_kop FROM donations WHERE NOT (${SHOWN})
+    ORDER BY amount_kop DESC, name, anon LIMIT ? OFFSET ?` },
+  recent: { size: 50, sql: `SELECT CASE WHEN ${SHOWN} THEN name END AS name, CASE WHEN ${SHOWN} THEN NULL ELSE anon END AS anon,
+    CASE hidden WHEN 0 THEN message END AS message, amount_kop, paid_at AS at FROM donations
+    ORDER BY paid_at DESC, rowid DESC LIMIT ? OFFSET ?` },
+};
+
 async function stats(req, env) {
   const h = cors(req, env) ?? {};
-  const raw = new URL(req.url).searchParams.get('page') ?? '0';
+  const q = new URL(req.url).searchParams;
+  const sort = q.get('sort') ?? 'top';
+  const raw = q.get('page') ?? '0';
   const page = /^\d{1,4}$/.test(raw) ? Number(raw) : -1;
-  if (page < 0 || page > PAGE_MAX) return json({ error: 'bad page' }, 400, h);
-  const [total, donors, recent] = await env.DB.batch([
+  if (!Object.hasOwn(LISTS, sort) || page < 0 || page > PAGE_MAX) return json({ error: 'bad request' }, 400, h);
+  const { size, sql } = LISTS[sort];
+  const [total, list] = await env.DB.batch([
     env.DB.prepare('SELECT COALESCE(SUM(amount_kop), 0) AS total_kop, COUNT(*) AS count FROM donations'),
-    env.DB.prepare(`SELECT name, SUM(amount_kop) AS amount_kop FROM donations WHERE name IS NOT NULL AND hidden = 0
-      GROUP BY name ORDER BY amount_kop DESC, name LIMIT ? OFFSET ?`).bind(PAGE_SIZE + 1, page * PAGE_SIZE),
-    env.DB.prepare(`SELECT CASE hidden WHEN 0 THEN name END AS name, CASE hidden WHEN 0 THEN message END AS message,
-      amount_kop, paid_at AS at FROM donations ORDER BY paid_at DESC, rowid DESC LIMIT ?`).bind(RECENT),
+    env.DB.prepare(sql).bind(size + 1, page * size),
   ]);
   return json({
     ...total.results[0],
+    sort,
     page,
-    donors: donors.results.slice(0, PAGE_SIZE),
-    more: donors.results.length > PAGE_SIZE,
-    recent: recent.results,
-  }, 200, { ...h, 'cache-control': 'public, max-age=30' });
+    items: list.results.slice(0, size),
+    more: list.results.length > size,
+  }, 200, { vary: 'origin', ...h, 'cache-control': 'public, max-age=30' });
 }
 
 function preflight(req, env) {

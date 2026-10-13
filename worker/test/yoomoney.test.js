@@ -7,6 +7,7 @@ import { signedString } from '../src/sign.js';
 const SITE = 'https://fabbit.dev';
 const BASE = 'https://donate.fabbit.dev';
 let ops = 0;
+const ANON = /^[0-9A-F]{4}$/;
 
 async function hmac(s, secret = 'test-secret') {
   const enc = new TextEncoder();
@@ -32,6 +33,8 @@ const register = async (body) => (await (await exports.default.fetch(`${BASE}/re
 })).json()).label;
 
 const stats = async (q = '') => (await exports.default.fetch(`${BASE}/stats${q}`, { headers: { origin: SITE } })).json();
+const top = async () => (await stats('?sort=top')).items;
+const recent = async () => (await stats('?sort=recent')).items;
 
 describe('POST /yoomoney', () => {
   it('оплата по заявке: сумма, имя и сообщение попадают в статистику', async () => {
@@ -40,8 +43,8 @@ describe('POST /yoomoney', () => {
     const s = await stats();
     expect(s.total_kop).toBe(9800);
     expect(s.count).toBe(1);
-    expect(s.donors).toEqual([{ name: 'Петя', amount_kop: 9800 }]);
-    expect(s.recent).toEqual([{ name: 'Петя', message: 'На осциллограф', amount_kop: 9800, at: '2026-10-13T10:00:01Z' }]);
+    expect(await top()).toEqual([{ name: 'Петя', anon: null, amount_kop: 9800 }]);
+    expect(await recent()).toEqual([{ name: 'Петя', anon: null, message: 'На осциллограф', amount_kop: 9800, at: '2026-10-13T10:00:01Z' }]);
   });
 
   it('повтор уведомления с тем же operation_id не удваивает сумму', async () => {
@@ -51,25 +54,31 @@ describe('POST /yoomoney', () => {
     expect((await stats()).total_kop).toBe(9800);
   });
 
-  it('без заявки: в итоге есть, в списке донатеров нет', async () => {
+  it('без заявки: аноним со случайным id, в топе отдельной строкой', async () => {
     await notify({ amount: '485.00' });
-    const s = await stats();
-    expect(s.total_kop).toBe(48500);
-    expect(s.donors).toEqual([]);
-    expect(s.recent[0]).toMatchObject({ name: null, message: null, amount_kop: 48500 });
+    expect((await stats()).total_kop).toBe(48500);
+    expect(await top()).toEqual([{ name: null, anon: expect.stringMatching(ANON), amount_kop: 48500 }]);
+    expect((await recent())[0]).toMatchObject({ name: null, anon: expect.stringMatching(ANON), message: null, amount_kop: 48500 });
   });
 
   it('заявка без имени: аноним, сообщение остаётся', async () => {
     const label = await register({ message: 'Привет' });
     await notify({ label });
-    const s = await stats();
-    expect(s.donors).toEqual([]);
-    expect(s.recent[0]).toMatchObject({ name: null, message: 'Привет' });
+    expect((await top())[0]).toMatchObject({ name: null, anon: expect.stringMatching(ANON) });
+    expect((await recent())[0]).toMatchObject({ name: null, message: 'Привет' });
   });
 
   it('управляющие символы и смена направления текста из имени и сообщения убраны', async () => {
     await notify({ label: await register({ name: '  Ва\u202Eся\n', message: 'a\u0000b' }) });
-    expect((await stats()).recent[0]).toMatchObject({ name: 'Вася', message: 'a b' });
+    expect((await recent())[0]).toMatchObject({ name: 'Вася', message: 'a b' });
+  });
+
+  it('у каждого анонимного доната свой id, в топе они не складываются', async () => {
+    await notify({ amount: '100.00' });
+    await notify({ amount: '200.00' });
+    const t = await top();
+    expect(t.map((d) => d.amount_kop)).toEqual([20000, 10000]);
+    expect(t[0].anon).not.toBe(t[1].anon);
   });
 
   it('второй платёж по тому же label идёт анонимно', async () => {
@@ -78,7 +87,10 @@ describe('POST /yoomoney', () => {
     await notify({ label, amount: '50.00' });
     const s = await stats();
     expect(s.total_kop).toBe(15000);
-    expect(s.donors).toEqual([{ name: 'Петя', amount_kop: 10000 }]);
+    expect(await top()).toEqual([
+      { name: 'Петя', anon: null, amount_kop: 10000 },
+      { name: null, anon: expect.stringMatching(ANON), amount_kop: 5000 },
+    ]);
   });
 
   it.each([
@@ -123,40 +135,47 @@ describe('GET /stats', () => {
     for (const [name, amount] of [['Аня', '100.00'], ['Боря', '500.00'], ['Аня', '450.50']]) {
       await notify({ label: await register({ name }), amount });
     }
-    expect((await stats()).donors).toEqual([
-      { name: 'Аня', amount_kop: 55050 },
-      { name: 'Боря', amount_kop: 50000 },
+    expect(await top()).toEqual([
+      { name: 'Аня', anon: null, amount_kop: 55050 },
+      { name: 'Боря', anon: null, amount_kop: 50000 },
     ]);
   });
 
-  it('донатеры по 100 на страницу', async () => {
+  it('топ: по 100 на страницу, по умолчанию', async () => {
     await env.DB.batch(Array.from({ length: 150 }, (_, i) => env.DB
-      .prepare('INSERT INTO donations (operation_id, amount_kop, name, paid_at) VALUES (?, ?, ?, ?)')
+      .prepare("INSERT INTO donations (operation_id, amount_kop, name, paid_at, anon) VALUES (?, ?, ?, ?, 'TEST')")
       .bind(`seed-${i}`, 100000 - i, `Донатер ${i}`, '2026-10-01T00:00:00Z')));
     const p0 = await stats();
-    expect(p0.donors).toHaveLength(100);
-    expect(p0.donors[0].name).toBe('Донатер 0');
+    expect(p0.sort).toBe('top');
+    expect(p0.items).toHaveLength(100);
+    expect(p0.items[0].name).toBe('Донатер 0');
     expect(p0.more).toBe(true);
-    const p1 = await stats('?page=1');
-    expect(p1.donors).toHaveLength(50);
-    expect(p1.donors[0].name).toBe('Донатер 100');
+    const p1 = await stats('?sort=top&page=1');
+    expect(p1.items).toHaveLength(50);
+    expect(p1.items[0].name).toBe('Донатер 100');
     expect(p1.more).toBe(false);
   });
 
-  it('последние 10 донатов, новые сверху', async () => {
-    for (let i = 0; i < 12; i++) await notify({ amount: `${i + 1}.00` });
-    const { recent } = await stats();
-    expect(recent).toHaveLength(10);
-    expect(recent[0].amount_kop).toBe(1200);
+  it('недавние: все донаты, анонимы тоже, новые сверху, по 50 на страницу', async () => {
+    await env.DB.batch(Array.from({ length: 60 }, (_, i) => env.DB
+      .prepare("INSERT INTO donations (operation_id, amount_kop, name, paid_at, anon) VALUES (?, ?, ?, ?, 'TEST')")
+      .bind(`seed-${i}`, 100 * (i + 1), i % 2 ? null : `Д${i}`, `2026-10-01T00:${String(i).padStart(2, '0')}:00Z`)));
+    const p0 = await stats('?sort=recent');
+    expect(p0.items).toHaveLength(50);
+    expect(p0.items[0]).toMatchObject({ name: null, amount_kop: 6000 });
+    expect(p0.items[1]).toMatchObject({ name: 'Д58', amount_kop: 5900 });
+    expect(p0.more).toBe(true);
+    const p1 = await stats('?sort=recent&page=1');
+    expect(p1.items).toHaveLength(10);
+    expect(p1.more).toBe(false);
   });
 
   it('скрытый донат (hidden = 1): сумма в итоге, имя и сообщение скрыты', async () => {
     await notify({ label: await register({ name: 'Спамер', message: 'реклама' }), operation_id: 'spam' });
     await env.DB.prepare("UPDATE donations SET hidden = 1 WHERE operation_id = 'spam'").run();
-    const s = await stats();
-    expect(s.total_kop).toBe(9800);
-    expect(s.donors).toEqual([]);
-    expect(s.recent[0]).toMatchObject({ name: null, message: null });
+    expect((await stats()).total_kop).toBe(9800);
+    expect(await top()).toEqual([{ name: null, anon: expect.stringMatching(ANON), amount_kop: 9800 }]);
+    expect((await recent())[0]).toMatchObject({ name: null, anon: expect.stringMatching(ANON), message: null });
   });
 
   it('CORS только для сайта', async () => {
@@ -164,10 +183,12 @@ describe('GET /stats', () => {
     expect(own.headers.get('access-control-allow-origin')).toBe(SITE);
     const evil = await exports.default.fetch(`${BASE}/stats`, { headers: { origin: 'https://evil.example' } });
     expect(evil.headers.get('access-control-allow-origin')).toBe(null);
+    // кеш браузера не должен отдать сайту ответ, полученный без Origin
+    for (const r of [own, evil]) expect(r.headers.get('vary')).toMatch(/origin/i);
   });
 
-  it.each(['-1', 'abc', '100000'])('page=%s: 400', async (p) => {
-    expect((await exports.default.fetch(`${BASE}/stats?page=${p}`)).status).toBe(400);
+  it.each(['page=-1', 'page=abc', 'page=100000', 'sort=new', 'sort='])('%s: 400', async (q) => {
+    expect((await exports.default.fetch(`${BASE}/stats?${q}`)).status).toBe(400);
   });
 });
 
@@ -181,6 +202,7 @@ describe('ночная чистка', () => {
     await waitOnExecutionContext(ctx);
     await notify({ label: 'old-label' });
     await notify({ label: fresh });
-    expect((await stats()).donors).toEqual([{ name: 'Свежий', amount_kop: 9800 }]);
+    const t = await top();
+    expect(t.map((d) => d.name).sort()).toEqual([null, 'Свежий'].sort());   // старая заявка удалена: платёж анонимный
   });
 });

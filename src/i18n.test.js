@@ -59,6 +59,51 @@ describe('две версии сайта', () => {
   });
 });
 
+// подстраницы донатов: «Траты» и «Спасибо» (successURL ЮMoney)
+describe.each(['spent', 'thanks'])('подстраница %s', (page) => {
+  const pr = parse(`${page}/index.html`), pe = parse(`en/${page}/index.html`);
+  it('разметка ru и en совпадает', () => expect(skeleton(pe)).toEqual(skeleton(pr)));
+  it('язык, переключатель и canonical', () => {
+    expect(pr.documentElement.lang).toBe('ru');
+    expect(pe.documentElement.lang).toBe('en');
+    expect(pr.querySelector('.nav__lang').getAttribute('href')).toBe(`/en/${page}/`);
+    expect(pe.querySelector('.nav__lang').getAttribute('href')).toBe(`/${page}/`);
+  });
+  it('в английской нет кириллицы', () => {
+    const clone = pe.body.cloneNode(true);
+    clone.querySelectorAll('[lang="ru"]').forEach((el) => el.remove());
+    expect(CYR.test(clone.textContent + pe.title)).toBe(false);
+  });
+});
+
+describe('донаты на главной', () => {
+  it.each([[ru, '/thanks/'], [en, '/en/thanks/']])('форма ведёт в ЮMoney и возвращает на «Спасибо»', (doc, back) => {
+    const f = doc.getElementById('donate-form');
+    expect(f.getAttribute('action')).toBe('https://yoomoney.ru/quickpay/confirm');
+    expect(f.getAttribute('method')).toBe('POST');
+    expect(f.elements.receiver.value).toBe('4100119646671169');
+    expect(f.elements.successURL.value).toBe(`https://fabbit.dev${back}`);
+    // имя и сообщение уходят в воркер, не в ЮMoney: у полей нет name
+    expect(f.querySelector('[data-name]').hasAttribute('name')).toBe(false);
+    expect(f.querySelector('[data-message]').hasAttribute('name')).toBe(false);
+    // карту или кошелёк посетитель выбирает на странице ЮMoney
+    expect(f.querySelectorAll('[name="paymentType"]')).toHaveLength(1);
+    expect(f.elements.paymentType.type).toBe('hidden');
+    expect([...f.querySelectorAll('[data-sum]')].map((b) => b.dataset.sum)).toEqual(['300', '500', '1000', '5000']);
+    expect(f.elements.sum.value).toBe('500');
+  });
+
+  it.each([[ru, '/spent/'], [en, '/en/spent/']])('на траты из главы ведёт одна ссылка', (doc, href) => {
+    expect([...doc.querySelectorAll('#support a')].map((a) => a.getAttribute('href'))).toEqual([href]);
+  });
+
+  it.each([ru, en])('в хиро кнопка «Поддержать» ведёт на главу', (doc) => {
+    const hrefs = [...doc.querySelectorAll('.hero .actions a')].map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('#support');
+    expect(hrefs).not.toContain('#profiles');
+  });
+});
+
 describe('двуязычные данные', () => {
   const both = (v, where) => {
     for (const lang of ['ru', 'en']) {

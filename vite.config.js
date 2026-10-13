@@ -43,10 +43,16 @@ export default defineConfig({
   server: { port: 5190 },
   // публичный туннель для проверки с телефона вне домашней сети: cloudflared или ssh -p 443 -R0:localhost:4173 a.pinggy.io
   preview: { port: 4173, allowedHosts: ['.trycloudflare.com', '.pinggy.net', '.pinggy-free.link', '.pinggy.link'] },
-  // две страницы: русская в корне, английская в /en/
-  build: { chunkSizeWarningLimit: 700, rollupOptions: { input: { main: 'index.html', en: 'en/index.html' } } },
+  // две страницы: русская в корне, английская в /en/; подстраницы донатов «Траты» и «Спасибо»
+  build: { chunkSizeWarningLimit: 700, rollupOptions: { input: {
+    main: 'index.html', en: 'en/index.html',
+    spent: 'spent/index.html', 'en-spent': 'en/spent/index.html',
+    thanks: 'thanks/index.html', 'en-thanks': 'en/thanks/index.html',
+  } } },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
+    // у воркера донатов свои тесты в рантайме Workers: cd worker && npm test
+    exclude: ['**/node_modules/**', 'worker/**'],
   },
 });

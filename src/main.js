@@ -17,6 +17,7 @@ import { mountHighFive } from './highfive.js';
 import { mountMenu } from './menu.js';
 import { isPhoneLayout, isLandscapePhone, slotY, stageHeight } from './layout.js';
 import { mountChipFlights } from './chipFlight.js';
+import { mountDonate } from './donate.js';
 
 gsap.registerPlugin(ScrollTrigger);
 document.documentElement.classList.add('js');
@@ -311,6 +312,9 @@ document.addEventListener('click', (e) => {
   history.replaceState(null, '', id === 'top' ? location.pathname : `#${id}`);
   sec.focus({ preventScroll: true });
 });
+
+// ── Поддержать: форма ЮMoney и статистика донатов ──
+mountDonate({ form: $('#donate-form'), stats: $('#donate-stats') });
 
 // ── Навигация темнеет над тёмными главами ──────────
 // onToggle может сработать прямо при создании (перезагрузка посреди страницы), поэтому массив объявлен заранее

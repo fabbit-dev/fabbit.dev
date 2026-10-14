@@ -62,7 +62,8 @@ async function yoomoney(req, env) {
   if (body.length > BODY_MAX) return new Response('too large', { status: 413 });
   const p = Object.fromEntries(new URLSearchParams(body));
   if (!(await verifySign(p, env.YOOMONEY_SECRET))) {
-    console.warn('yoomoney: bad sign', p.operation_id);
+    // названия полей без значений: видно, чем уведомление отличается от ожидаемого, без персональных данных
+    console.warn('yoomoney: bad sign', p.operation_id, Object.keys(p).sort().join(','));
     return new Response('bad sign', { status: 400 });
   }
   // кнопка «Протестировать» в настройках ЮMoney

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { exports, env } from 'cloudflare:workers';
 import { createScheduledController, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import worker from '../src/index.js';
@@ -91,6 +91,17 @@ describe('POST /yoomoney', () => {
       { name: 'Петя', anon: null, amount_kop: 10000 },
       { name: null, anon: expect.stringMatching(ANON), amount_kop: 5000 },
     ]);
+  });
+
+  it('чужая подпись: в лог названия полей, без значений', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await notify({ label: 'secret-label', amount: '98.00', operation_id: 'op-log', firstname: 'Иван' }, { secret: 'wrong' });
+    const line = warn.mock.calls.map((c) => c.join(' ')).join('\n');
+    warn.mockRestore();
+    expect(line).toContain('bad sign');
+    expect(line).toContain('op-log');
+    expect(line).toContain('amount,codepro,currency,datetime,firstname,label,notification_type,operation_id,sender,sign,unaccepted,withdraw_amount');
+    expect(line).not.toMatch(/secret-label|98\.00|Иван/);
   });
 
   it.each([

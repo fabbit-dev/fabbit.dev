@@ -1,49 +1,47 @@
-# Работа с репозиторием
+# Contributing
 
-`main` публикуется на fabbit.dev при каждом пуше. Изменения попадают туда только через
-pull request.
+Each push to `main` deploys the site to fabbit.dev. Submit changes through a pull request.
 
-## Цикл
+## Workflow
 
 ```bash
 git switch main && git pull
 git switch -c feat/team-section
-# работа; перед коммитом
+# Make changes, then check before committing
 npm test && npm run build
-git add <файлы>
+git add <files>
 git commit -m "feat(team): карточки команды"
-git push -u origin HEAD            # -u только в первый push
+git push -u origin HEAD            # Use -u for the first push only
 gh pr create --fill --title "feat(team): карточки команды"
 gh pr merge --squash --delete-branch
 git switch main && git pull
 ```
 
-Squash берёт заголовок коммита в `main` из заголовка PR.
+Squash merging uses the PR title as the commit title on `main`.
 
-## Ветки
+## Branches
 
-| Префикс | Для чего | Пример |
+| Prefix | Purpose | Example |
 |---|---|---|
-| `feat/` | раздел, компонент | `feat/profiles-grid` |
-| `fix/` | исправление | `fix/mobile-menu` |
-| `docs/` | README, тексты без кода | `docs/en-copy` |
-| `style/` | вёрстка без логики | `style/hero-spacing` |
+| `feat/` | Section or component | `feat/profiles-grid` |
+| `fix/` | Bug fix | `fix/mobile-menu` |
+| `docs/` | README or text changes without code | `docs/en-copy` |
+| `style/` | Layout changes without logic | `style/hero-spacing` |
 
-Ветка на одну задачу, один-два дня.
+Use one branch per task. Keep its lifetime to one or two days.
 
-## Коммиты
+## Commits
 
-`тип(область): что сделано`, по-русски. Область: раздел страницы или каталог.
-Типы: `feat`, `fix`, `docs`, `style`, `chore`, `refactor`, `test`, `perf`.
-Одно изменение, один коммит.
+Use `type(scope): change`, with the description in Russian. The scope identifies a page section or directory.
+Types: `feat`, `fix`, `docs`, `style`, `chore`, `refactor`, `test`, `perf`.
+Keep each commit focused on one change.
 
-## Перед слиянием
+## Before merging
 
-`npm run build && npm run preview`: русская и английская версии, телефон и десктоп,
-консоль без ошибок.
+Run `npm run build && npm run preview`. Check the Russian and English versions on mobile and desktop. Fix console errors.
 
-## Нельзя
+## Do not
 
-* Push в `main` и `git push --force` в общие ветки.
-* Коммитить `dist/`, `scripts/out/`, исходники Blender.
-* Держать ветку неделями.
+- Push to `main` or use `git push --force` on shared branches.
+- Commit `dist/`, `scripts/out/`, or Blender source files.
+- Keep branches open for weeks.

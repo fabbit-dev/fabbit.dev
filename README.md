@@ -1,5 +1,7 @@
 # fabbit.dev
 
+[**Русский**](README.md) | [English](README.en.md)
+
 Лендинг проекта [Fabbit](https://fabbit.dev). Русская версия в корне, английская в `/en/`.
 
 ## Локальный запуск

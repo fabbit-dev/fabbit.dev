@@ -1,47 +1,49 @@
-# Contributing
+# Работа с репозиторием
 
-Each push to `main` deploys the site to fabbit.dev. Submit changes through a pull request.
+[**Русский**](CONTRIBUTING.md) | [English](CONTRIBUTING.en.md)
 
-## Workflow
+Каждый пуш в `main` публикует сайт на fabbit.dev. Изменения вносите через pull request.
+
+## Цикл
 
 ```bash
 git switch main && git pull
 git switch -c feat/team-section
-# Make changes, then check before committing
+# Внесите изменения, затем проверьте перед коммитом
 npm test && npm run build
-git add <files>
+git add <файлы>
 git commit -m "feat(team): карточки команды"
-git push -u origin HEAD            # Use -u for the first push only
+git push -u origin HEAD            # -u только для первого пуша
 gh pr create --fill --title "feat(team): карточки команды"
 gh pr merge --squash --delete-branch
 git switch main && git pull
 ```
 
-Squash merging uses the PR title as the commit title on `main`.
+При squash-слиянии заголовок PR становится заголовком коммита в `main`.
 
-## Branches
+## Ветки
 
-| Prefix | Purpose | Example |
+| Префикс | Для чего | Пример |
 |---|---|---|
-| `feat/` | Section or component | `feat/profiles-grid` |
-| `fix/` | Bug fix | `fix/mobile-menu` |
-| `docs/` | README or text changes without code | `docs/en-copy` |
-| `style/` | Layout changes without logic | `style/hero-spacing` |
+| `feat/` | Раздел или компонент | `feat/profiles-grid` |
+| `fix/` | Исправление ошибки | `fix/mobile-menu` |
+| `docs/` | README или тексты без кода | `docs/en-copy` |
+| `style/` | Вёрстка без логики | `style/hero-spacing` |
 
-Use one branch per task. Keep its lifetime to one or two days.
+Одна ветка на задачу. Срок жизни ветки: один-два дня.
 
-## Commits
+## Коммиты
 
-Use `type(scope): change`, with the description in Russian. The scope identifies a page section or directory.
-Types: `feat`, `fix`, `docs`, `style`, `chore`, `refactor`, `test`, `perf`.
-Keep each commit focused on one change.
+Используйте `тип(область): что сделано`, описание по-русски. Область обозначает раздел страницы или каталог.
+Типы: `feat`, `fix`, `docs`, `style`, `chore`, `refactor`, `test`, `perf`.
+Один коммит на одно изменение.
 
-## Before merging
+## Перед слиянием
 
-Run `npm run build && npm run preview`. Check the Russian and English versions on mobile and desktop. Fix console errors.
+Запустите `npm run build && npm run preview`. Проверьте русскую и английскую версии на телефоне и десктопе. Исправьте ошибки в консоли.
 
-## Do not
+## Нельзя
 
-- Push to `main` or use `git push --force` on shared branches.
-- Commit `dist/`, `scripts/out/`, or Blender source files.
-- Keep branches open for weeks.
+- Пушить в `main` или использовать `git push --force` в общих ветках.
+- Коммитить `dist/`, `scripts/out/` или исходники Blender.
+- Держать ветку неделями.

@@ -1,3 +1,13 @@
+/* ₽ отсутствует в подключённых latin/cyrillic: берём только этот знак из локального latin-ext. */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-ext-500-normal.woff2') format('woff2');
+  unicode-range: U+20BD;
+}
+
 /* Токены цвета — из brand-kit/tokens.css. Тёмная шкала включается на главах с data-theme="dark",
    а не по системной теме: страница сама чередует белые и чёрные главы. */
 :root {

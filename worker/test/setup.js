@@ -1,8 +1,10 @@
-import { beforeEach } from 'vitest';
-import { env } from 'cloudflare:workers';
-import { applyD1Migrations } from 'cloudflare:test';
+import { beforeEach, vi } from 'vitest';
+import { objects, opts, s3fetch } from './s3mock.js';
 
-await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
+vi.stubGlobal('fetch', s3fetch);
 
-// D1 общая на файл: каждый тест с пустыми таблицами
-beforeEach(() => env.DB.batch([env.DB.prepare('DELETE FROM donations'), env.DB.prepare('DELETE FROM pending')]));
+// бакет общий на файл: каждый тест с пустым
+beforeEach(() => {
+  objects.clear();
+  opts.pageSize = 1000;
+});

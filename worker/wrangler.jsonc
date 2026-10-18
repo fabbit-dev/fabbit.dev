@@ -1,19 +1,21 @@
 // Воркер донатов fabbit.dev: заявка до оплаты, приём уведомлений ЮMoney, статистика.
-// Секрет YOOMONEY_SECRET только через `wrangler secret put`, в этот файл не пишем.
+// Секреты YOOMONEY_SECRET, S3_KEY_ID (<tenant_id>:<key_id>), S3_SECRET только через `wrangler secret put`.
 {
   "name": "fabbit-donate",
   "main": "src/index.js",
   "compatibility_date": "2026-09-01",
   "workers_dev": false,
   "routes": [{ "pattern": "donate.fabbit.dev", "custom_domain": true }],
-  "vars": { "ALLOWED_ORIGIN": "https://fabbit.dev" },
-  "d1_databases": [
-    // здесь нули; настоящий id только в wrangler.prod.jsonc (в .gitignore), README «Деплой воркера»
-    { "binding": "DB", "database_name": "fabbit-donate", "database_id": "00000000-0000-0000-0000-000000000000" }
-  ],
+  // хранилище: Object Storage cloud.ru, данные в РФ (152-ФЗ). Раскладка бакета в src/store.js
+  "vars": {
+    "ALLOWED_ORIGIN": "https://fabbit.dev",
+    "S3_ENDPOINT": "https://s3.cloud.ru",
+    "S3_REGION": "ru-central-1",
+    "S3_BUCKET": "bucket-8720a5"
+  },
   // заявки: 10 в минуту с одного IP
   "ratelimits": [{ "name": "REGISTER_LIMIT", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
-  // раз в сутки удаляем неоплаченные заявки старше суток
-  "triggers": { "crons": ["17 3 * * *"] },
+  // раз в час: неоплаченные заявки старше суток, сверка index.json с donations/
+  "triggers": { "crons": ["17 * * * *"] },
   "observability": { "enabled": true }
 }

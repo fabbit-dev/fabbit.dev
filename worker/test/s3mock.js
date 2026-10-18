@@ -13,7 +13,7 @@ export async function s3fetch(input, init = {}) {
     return new Response('AccessDenied', { status: 403 });
   }
   const [, bucket, ...rest] = url.pathname.split('/');
-  if (bucket !== 'bucket') return new Response('NoSuchBucket', { status: 404 });
+  if (bucket !== 'bucket') return new Response('<Error><Code>NoSuchBucket</Code></Error>', { status: 404 });
   const key = decodeURIComponent(rest.join('/'));
   const method = init.method ?? 'GET';
   if (method === 'GET' && !key) {

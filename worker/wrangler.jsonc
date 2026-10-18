@@ -11,7 +11,7 @@
     "ALLOWED_ORIGIN": "https://fabbit.dev",
     "S3_ENDPOINT": "https://s3.cloud.ru",
     "S3_REGION": "ru-central-1",
-    "S3_BUCKET": "fabbit-donate"
+    "S3_BUCKET": "bucket-8720a5"
   },
   // заявки: 10 в минуту с одного IP
   "ratelimits": [{ "name": "REGISTER_LIMIT", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],

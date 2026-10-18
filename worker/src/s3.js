@@ -41,14 +41,20 @@ export function bucket(env) {
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
     const signed = await sign({ method, url, headers, body, keyId: env.S3_KEY_ID, secret: env.S3_SECRET, region: env.S3_REGION });
     const res = await fetch(url, { method, headers: signed, body: method === 'PUT' ? body : undefined });
-    if (!res.ok && res.status !== 404) throw new Error(`s3 ${method} ${key}: ${res.status} ${(await res.text()).slice(0, 200)}`);
-    return res;
+    // 404 без объекта: ответ get() = null; нет бакета (опечатка в S3_BUCKET): ошибка
+    if (res.ok || (res.status === 404 && key)) {
+      if (res.ok) return res;
+      const text = await res.text();
+      if (!text.includes('NoSuchBucket')) return new Response(null, { status: 404 });
+      throw new Error(`s3 ${method} ${key}: 404 ${text.slice(0, 200)}`);
+    }
+    throw new Error(`s3 ${method} ${key}: ${res.status} ${(await res.text()).slice(0, 200)}`);
   }
   return {
     // объект или null, если его нет
     async get(key) {
       const res = await req('GET', key);
-      return res.status === 404 ? (await res.body?.cancel(), null) : res.json();
+      return res.status === 404 ? null : res.json();
     },
     async put(key, data) {
       await (await req('PUT', key, { body: JSON.stringify(data), headers: { 'content-type': 'application/json' } })).body?.cancel();

@@ -237,6 +237,30 @@ describe('cron', () => {
 });
 
 describe('хранение в S3', () => {
+  it('нет бакета (опечатка в S3_BUCKET): 500, не пустой список', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    env.S3_BUCKET = 'typo';
+    try {
+      expect((await exports.default.fetch(`${BASE}/stats`)).status).toBe(500);
+    } finally {
+      env.S3_BUCKET = 'bucket';
+      err.mockRestore();
+    }
+  });
+
+  it('cron переносит донаты из D1, повтор без дублей', async () => {
+    const row = { operation_id: '845', amount_kop: 9700, name: 'Друг', anon: 'AB12', message: 'привет', paid_at: '2026-10-17T15:28:32Z', hidden: 0 };
+    const DB = { prepare: () => ({ all: async () => ({ results: [row] }) }) };
+    for (let i = 0; i < 2; i++) {
+      const ctx = createExecutionContext();
+      await worker.scheduled(createScheduledController(), { ...env, DB }, ctx);
+      await waitOnExecutionContext(ctx);
+    }
+    expect(get('donations/845.json')).toEqual(row);
+    expect(await top()).toEqual([{ name: 'Друг', anon: null, amount_kop: 9700 }]);
+    expect((await stats()).count).toBe(1);
+  });
+
   it('донат: отдельный объект donations/<operation_id>.json и строка индекса, заявка удалена', async () => {
     const label = await register({ name: 'Петя', message: 'Удачи' });
     expect(get(`pending/${label}.json`)).toMatchObject({ name: 'Петя', message: 'Удачи' });

@@ -1,6 +1,6 @@
 // Подписанное уведомление ЮMoney на воркер: проверка приёма без реального платежа.
 //   SECRET=... node scripts/notify.mjs http://localhost:8787 [сумма] [label]
-// Сумма попадёт в статистику; в проде удалите строку потом (README, «Модерация»).
+// Сумма попадёт в статистику; в проде удалите донат потом: scripts/s3.mjs delete <operation_id>.
 import { createHmac } from 'node:crypto';
 import { signedString } from '../src/sign.js';
 

@@ -1,6 +1,8 @@
 import { verifySign } from './sign.js';
+import { bucket } from './s3.js';
+import { INDEX, OP_RE, LABEL_RE, donationKey, pendingKey, addToIndex, reconcile } from './store.js';
 
-// Донаты fabbit.dev через ЮMoney.
+// Донаты fabbit.dev через ЮMoney. Хранение в S3 cloud.ru (данные в РФ, 152-ФЗ), раскладка в store.js.
 //   POST /register  сайт до оплаты: имя и сообщение → label для формы quickpay
 //   POST /yoomoney  HTTP-уведомление ЮMoney о переводе
 //   GET  /stats     итог и список донатов: топ по сумме или недавние, по страницам
@@ -45,8 +47,7 @@ async function register(req, env) {
     return json({ error: 'bad request' }, 400, h);
   }
   const label = crypto.randomUUID();
-  await env.DB.prepare('INSERT INTO pending (label, name, message, created_at) VALUES (?, ?, ?, ?)')
-    .bind(label, name, message, Date.now()).run();
+  await bucket(env).put(pendingKey(label), { name, message, created_at: Date.now() });
   return json({ label }, 200, h);
 }
 
@@ -75,15 +76,20 @@ async function yoomoney(req, env) {
   }
   const m = /^(\d{1,9})(?:\.(\d{1,2}))?$/.exec(p.amount ?? '');
   const op = p.operation_id ?? '';
-  if (!m || !op || op.length > 64 || (p.datetime ?? '').length > 40) return new Response('bad request', { status: 400 });
+  if (!m || !OP_RE.test(op) || (p.datetime ?? '').length > 40) return new Response('bad request', { status: 400 });
   const kop = Number(m[1]) * 100 + Number((m[2] ?? '').padEnd(2, '0'));
-  const label = p.label ?? '';
-  await env.DB.batch([
-    env.DB.prepare(`INSERT OR IGNORE INTO donations (operation_id, amount_kop, name, message, paid_at, anon)
-      SELECT ?1, ?2, pending.name, pending.message, ?3, ?5 FROM (SELECT 1) LEFT JOIN pending ON pending.label = ?4`)
-      .bind(op, kop, p.datetime ?? '', label, anonId()),
-    env.DB.prepare('DELETE FROM pending WHERE label = ?').bind(label),
-  ]);
+  const label = LABEL_RE.test(p.label ?? '') ? p.label : null;
+  const s3 = bucket(env);
+  // запись доната есть: это повтор уведомления, только дописываем индекс, если прошлый раз не успели
+  let d = await s3.get(donationKey(op));
+  if (!d) {
+    const pending = label && (await s3.get(pendingKey(label)));
+    d = { operation_id: op, amount_kop: kop, name: pending?.name ?? null, anon: anonId(),
+      message: pending?.message ?? null, paid_at: p.datetime ?? '', hidden: 0 };
+    await s3.put(donationKey(op), d);
+  }
+  await addToIndex(s3, [d]);
+  if (label) await s3.del(pendingKey(label));
   return new Response('ok');
 }
 
@@ -92,14 +98,24 @@ async function yoomoney(req, env) {
 //   sort=recent  все донаты, новые сверху, по 50
 // Аноним (нет имени или hidden = 1): name = null, anon = случайный id. У скрытого message = null.
 // Страница с сообщениями тяжелее, поэтому меньше: ответ держим около 16 КБ (Cloudflare из России).
-const SHOWN = 'name IS NOT NULL AND hidden = 0';   // имя показываем; иначе строка анонимная, с anon
+const shown = (d) => d.name !== null && !d.hidden;   // имя показываем; иначе строка анонимная, с anon
+// порядок как в SQLite: null раньше строки, строки побайтово
+const cmp = (a, b) => (a === b ? 0 : a === null ? -1 : b === null ? 1 : a < b ? -1 : 1);
 const LISTS = {
-  top: { size: 100, sql: `SELECT name, NULL AS anon, SUM(amount_kop) AS amount_kop FROM donations WHERE ${SHOWN} GROUP BY name
-    UNION ALL SELECT NULL, anon, amount_kop FROM donations WHERE NOT (${SHOWN})
-    ORDER BY amount_kop DESC, name, anon LIMIT ? OFFSET ?` },
-  recent: { size: 50, sql: `SELECT CASE WHEN ${SHOWN} THEN name END AS name, CASE WHEN ${SHOWN} THEN NULL ELSE anon END AS anon,
-    CASE hidden WHEN 0 THEN message END AS message, amount_kop, paid_at AS at FROM donations
-    ORDER BY paid_at DESC, rowid DESC LIMIT ? OFFSET ?` },
+  top: { size: 100, list(all) {
+    const named = new Map();
+    const rows = [];
+    for (const d of all) {
+      if (shown(d)) named.set(d.name, (named.get(d.name) ?? 0) + d.amount_kop);
+      else rows.push({ name: null, anon: d.anon, amount_kop: d.amount_kop });
+    }
+    for (const [name, amount_kop] of named) rows.push({ name, anon: null, amount_kop });
+    return rows.sort((a, b) => b.amount_kop - a.amount_kop || cmp(a.name, b.name) || cmp(a.anon, b.anon));
+  } },
+  recent: { size: 50, list: (all) => all.map((d, i) => [d, i])
+    .sort(([a, i], [b, j]) => cmp(b.paid_at, a.paid_at) || j - i)
+    .map(([d]) => ({ name: shown(d) ? d.name : null, anon: shown(d) ? null : d.anon,
+      message: d.hidden ? null : d.message, amount_kop: d.amount_kop, at: d.paid_at })) },
 };
 
 async function stats(req, env) {
@@ -109,17 +125,16 @@ async function stats(req, env) {
   const raw = q.get('page') ?? '0';
   const page = /^\d{1,4}$/.test(raw) ? Number(raw) : -1;
   if (!Object.hasOwn(LISTS, sort) || page < 0 || page > PAGE_MAX) return json({ error: 'bad request' }, 400, h);
-  const { size, sql } = LISTS[sort];
-  const [total, list] = await env.DB.batch([
-    env.DB.prepare('SELECT COALESCE(SUM(amount_kop), 0) AS total_kop, COUNT(*) AS count FROM donations'),
-    env.DB.prepare(sql).bind(size + 1, page * size),
-  ]);
+  const { size, list } = LISTS[sort];
+  const all = (await bucket(env).get(INDEX)) ?? [];
+  const rows = list(all).slice(page * size, (page + 1) * size + 1);
   return json({
-    ...total.results[0],
+    total_kop: all.reduce((s, d) => s + d.amount_kop, 0),
+    count: all.length,
     sort,
     page,
-    items: list.results.slice(0, size),
-    more: list.results.length > size,
+    items: rows.slice(0, size),
+    more: rows.length > size,
   }, 200, { vary: 'origin', ...h, 'cache-control': 'public, max-age=30' });
 }
 
@@ -134,14 +149,24 @@ function preflight(req, env) {
 export default {
   async fetch(req, env) {
     const { pathname } = new URL(req.url);
-    if (req.method === 'OPTIONS') return preflight(req, env);
-    if (req.method === 'POST' && pathname === '/register') return register(req, env);
-    if (req.method === 'POST' && pathname === '/yoomoney') return yoomoney(req, env);
-    if (req.method === 'GET' && pathname === '/stats') return stats(req, env);
-    return new Response('not found', { status: 404 });
+    try {
+      if (req.method === 'OPTIONS') return preflight(req, env);
+      if (req.method === 'POST' && pathname === '/register') return await register(req, env);
+      if (req.method === 'POST' && pathname === '/yoomoney') return await yoomoney(req, env);
+      if (req.method === 'GET' && pathname === '/stats') return await stats(req, env);
+      return new Response('not found', { status: 404 });
+    } catch (e) {
+      // S3 недоступно: 500, ЮMoney повторит уведомление
+      console.error(pathname, e.message);
+      return json({ error: 'storage' }, 500, cors(req, env) ?? {});
+    }
   },
-  // cron из wrangler.jsonc: неоплаченные заявки старше суток
+  // cron из wrangler.jsonc, раз в час: неоплаченные заявки старше суток, сверка индекса
   async scheduled(_, env) {
-    await env.DB.prepare('DELETE FROM pending WHERE created_at < ?').bind(Date.now() - PENDING_TTL).run();
+    const s3 = bucket(env);
+    const old = (await s3.list('pending/')).filter((o) => o.modified < Date.now() - PENDING_TTL);
+    await Promise.all(old.map((o) => s3.del(o.key)));
+    const added = await reconcile(s3);
+    if (added) console.warn('reconcile: в индекс дописано', added);
   },
 };

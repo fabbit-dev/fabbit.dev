@@ -2,7 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { exports, env } from 'cloudflare:workers';
 import { createScheduledController, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import worker from '../src/index.js';
+import { bucket } from '../src/s3.js';
+import { updateDonation } from '../src/store.js';
 import { signedString } from '../src/sign.js';
+import { put, get, objects, opts } from './s3mock.js';
 
 const SITE = 'https://fabbit.dev';
 const BASE = 'https://donate.fabbit.dev';
@@ -31,6 +34,9 @@ async function notify(fields = {}, { secret } = {}) {
 const register = async (body) => (await (await exports.default.fetch(`${BASE}/register`, {
   method: 'POST', headers: { origin: SITE, 'cf-connecting-ip': `192.0.2.${ops % 250}` }, body: JSON.stringify(body),
 })).json()).label;
+
+// донаты сразу в индекс, мимо уведомлений
+const seed = (rows) => put('index.json', rows.map((r, i) => ({ operation_id: `seed-${i}`, anon: 'TEST', message: null, hidden: 0, ...r })));
 
 const stats = async (q = '') => (await exports.default.fetch(`${BASE}/stats${q}`, { headers: { origin: SITE } })).json();
 const top = async () => (await stats('?sort=top')).items;
@@ -153,9 +159,7 @@ describe('GET /stats', () => {
   });
 
   it('топ: по 100 на страницу, по умолчанию', async () => {
-    await env.DB.batch(Array.from({ length: 150 }, (_, i) => env.DB
-      .prepare("INSERT INTO donations (operation_id, amount_kop, name, paid_at, anon) VALUES (?, ?, ?, ?, 'TEST')")
-      .bind(`seed-${i}`, 100000 - i, `Донатер ${i}`, '2026-10-01T00:00:00Z')));
+    seed(Array.from({ length: 150 }, (_, i) => ({ amount_kop: 100000 - i, name: `Донатер ${i}`, paid_at: '2026-10-01T00:00:00Z' })));
     const p0 = await stats();
     expect(p0.sort).toBe('top');
     expect(p0.items).toHaveLength(100);
@@ -168,9 +172,8 @@ describe('GET /stats', () => {
   });
 
   it('недавние: все донаты, анонимы тоже, новые сверху, по 50 на страницу', async () => {
-    await env.DB.batch(Array.from({ length: 60 }, (_, i) => env.DB
-      .prepare("INSERT INTO donations (operation_id, amount_kop, name, paid_at, anon) VALUES (?, ?, ?, ?, 'TEST')")
-      .bind(`seed-${i}`, 100 * (i + 1), i % 2 ? null : `Д${i}`, `2026-10-01T00:${String(i).padStart(2, '0')}:00Z`)));
+    seed(Array.from({ length: 60 }, (_, i) => ({ amount_kop: 100 * (i + 1), name: i % 2 ? null : `Д${i}`,
+      paid_at: `2026-10-01T00:${String(i).padStart(2, '0')}:00Z` })));
     const p0 = await stats('?sort=recent');
     expect(p0.items).toHaveLength(50);
     expect(p0.items[0]).toMatchObject({ name: null, amount_kop: 6000 });
@@ -183,7 +186,8 @@ describe('GET /stats', () => {
 
   it('скрытый донат (hidden = 1): сумма в итоге, имя и сообщение скрыты', async () => {
     await notify({ label: await register({ name: 'Спамер', message: 'реклама' }), operation_id: 'spam' });
-    await env.DB.prepare("UPDATE donations SET hidden = 1 WHERE operation_id = 'spam'").run();
+    await updateDonation(bucket(env), 'spam', { hidden: 1 });
+    expect(get('donations/spam.json').hidden).toBe(1);
     expect((await stats()).total_kop).toBe(9800);
     expect(await top()).toEqual([{ name: null, anon: expect.stringMatching(ANON), amount_kop: 9800 }]);
     expect((await recent())[0]).toMatchObject({ name: null, anon: expect.stringMatching(ANON), message: null });
@@ -203,17 +207,77 @@ describe('GET /stats', () => {
   });
 });
 
-describe('ночная чистка', () => {
+const cron = async () => {
+  const ctx = createExecutionContext();
+  await worker.scheduled(createScheduledController(), env, ctx);
+  await waitOnExecutionContext(ctx);
+};
+
+describe('cron', () => {
   it('неоплаченная заявка старше суток удаляется, оплата по ней идёт анонимно', async () => {
-    await env.DB.prepare('INSERT INTO pending (label, name, message, created_at) VALUES (?, ?, ?, ?)')
-      .bind('old-label', 'Старый', null, Date.now() - 25 * 3600 * 1000).run();
+    const old = '00000000-0000-4000-8000-000000000000';
+    put(`pending/${old}.json`, { name: 'Старый', message: null, created_at: 0 }, Date.now() - 25 * 3600 * 1000);
     const fresh = await register({ name: 'Свежий' });
-    const ctx = createExecutionContext();
-    await worker.scheduled(createScheduledController(), env, ctx);
-    await waitOnExecutionContext(ctx);
-    await notify({ label: 'old-label' });
+    await cron();
+    expect(get(`pending/${old}.json`)).toBe(null);
+    await notify({ label: old });
     await notify({ label: fresh });
     const t = await top();
     expect(t.map((d) => d.name).sort()).toEqual([null, 'Свежий'].sort());   // старая заявка удалена: платёж анонимный
+  });
+
+  it('донат, потерянный индексом, возвращается сверкой, по всем страницам списка', async () => {
+    opts.pageSize = 2;
+    for (let i = 0; i < 5; i++) await notify({ operation_id: `r${i}` });
+    put('index.json', get('index.json').filter((d) => d.operation_id !== 'r3'));
+    expect((await stats()).count).toBe(4);
+    await cron();
+    expect((await stats()).count).toBe(5);
+  });
+});
+
+describe('хранение в S3', () => {
+  it('донат: отдельный объект donations/<operation_id>.json и строка индекса, заявка удалена', async () => {
+    const label = await register({ name: 'Петя', message: 'Удачи' });
+    expect(get(`pending/${label}.json`)).toMatchObject({ name: 'Петя', message: 'Удачи' });
+    await notify({ label, operation_id: '123456789', amount: '98.00' });
+    const d = get('donations/123456789.json');
+    expect(d).toEqual({ operation_id: '123456789', amount_kop: 9800, name: 'Петя', anon: expect.stringMatching(ANON),
+      message: 'Удачи', paid_at: expect.any(String), hidden: 0 });
+    expect(get('index.json')).toEqual([d]);
+    expect(get(`pending/${label}.json`)).toBe(null);
+  });
+
+  it('индекс не записался: повтор уведомления дописывает его, донат тот же', async () => {
+    await notify({ operation_id: 'lost' });
+    const d = get('donations/lost.json');
+    objects.delete('index.json');
+    expect((await notify({ operation_id: 'lost' })).status).toBe(200);
+    expect(get('index.json')).toEqual([d]);
+  });
+
+  it('S3 отвечает ошибкой: 500, ЮMoney повторит', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    env.S3_KEY_ID = 'other:key';
+    try {
+      expect((await notify()).status).toBe(500);
+      expect((await exports.default.fetch(`${BASE}/stats`)).status).toBe(500);
+      expect(err).toHaveBeenCalledWith('/yoomoney', expect.stringContaining('403'));
+    } finally {
+      env.S3_KEY_ID = 'tenant:key';
+      err.mockRestore();
+    }
+  });
+
+  it('operation_id с символами вне [A-Za-z0-9_.-]: 400, ключ не строится', async () => {
+    expect((await notify({ operation_id: '../index' })).status).toBe(400);
+    expect(objects.size).toBe(0);
+  });
+
+  it('модерация: удалённый донат пропадает из объекта и индекса', async () => {
+    await notify({ operation_id: 'manual-1' });
+    await updateDonation(bucket(env), 'manual-1', null);
+    expect(get('donations/manual-1.json')).toBe(null);
+    expect((await stats()).count).toBe(0);
   });
 });

@@ -138,17 +138,6 @@ async function stats(req, env) {
   }, 200, { vary: 'origin', ...h, 'cache-control': 'public, max-age=30' });
 }
 
-// Перенос из D1, временный: работает, пока в wrangler.prod.jsonc есть привязка DB.
-// Повтор безопасен: есть объект доната — не трогаем, индекс дописывается без дублей.
-async function importD1(db, s3) {
-  const { results } = await db.prepare('SELECT * FROM donations ORDER BY paid_at, rowid').all();
-  const donations = results.map(({ operation_id, amount_kop, name, anon, message, paid_at, hidden }) =>
-    ({ operation_id, amount_kop, name, anon, message, paid_at, hidden: hidden ? 1 : 0 }));
-  for (const d of donations) if (!(await s3.get(donationKey(d.operation_id)))) await s3.put(donationKey(d.operation_id), d);
-  const added = await addToIndex(s3, donations);
-  if (added) console.warn('importD1: перенесено', added);
-}
-
 function preflight(req, env) {
   const h = cors(req, env);
   return new Response(null, {
@@ -177,7 +166,6 @@ export default {
     const s3 = bucket(env);
     const old = (await s3.list('pending/')).filter((o) => o.modified < Date.now() - PENDING_TTL);
     await Promise.all(old.map((o) => s3.del(o.key)));
-    if (env.DB) await importD1(env.DB, s3);
     const added = await reconcile(s3);
     if (added) console.warn('reconcile: в индекс дописано', added);
   },

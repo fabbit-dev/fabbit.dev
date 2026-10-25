@@ -15,10 +15,11 @@ const uri = (s) => encodeURIComponent(s).replace(/[!'()*]/g, (c) => `%${c.charCo
 export async function sign({ method, url, headers = {}, body = '', keyId, secret, region, service = 's3', date = new Date() }) {
   const amzDate = date.toISOString().replace(/[-:]|\.\d{3}/g, '');
   const day = amzDate.slice(0, 8);
-  const h = { ...Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v).trim()])),
+  const h = { ...Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), String(v).trim().replace(/\s+/g, ' ')])),
     host: url.host, 'x-amz-date': amzDate, 'x-amz-content-sha256': await sha256(body) };
   const names = Object.keys(h).sort();
-  const query = [...url.searchParams].map(([k, v]) => [uri(k), uri(v)]).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  const query = [...url.searchParams].map(([k, v]) => [uri(k), uri(v)]).sort(([ak, av], [bk, bv]) => cmp(ak, bk) || cmp(av, bv))
     .map(([k, v]) => `${k}=${v}`).join('&');
   const canonical = [method, url.pathname, query, ...names.map((n) => `${n}:${h[n]}`), '', names.join(';'), h['x-amz-content-sha256']].join('\n');
   const scope = `${day}/${region}/${service}/aws4_request`;
@@ -35,12 +36,19 @@ const unxml = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quo
 // Бакет из env: S3_ENDPOINT, S3_BUCKET, S3_REGION, S3_KEY_ID (<tenant_id>:<key_id>), S3_SECRET.
 // Объекты храним JSON. Ключи из латиницы, цифр и «/._-», кодировать нечего.
 export function bucket(env) {
+  for (const name of ['S3_ENDPOINT', 'S3_BUCKET', 'S3_REGION', 'S3_KEY_ID', 'S3_SECRET']) {
+    if (typeof env[name] !== 'string' || !env[name].trim()) throw new Error(`s3: missing ${name}`);
+  }
+  const endpoint = new URL(env.S3_ENDPOINT);
+  if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.search || endpoint.hash) {
+    throw new Error('s3: invalid S3_ENDPOINT');
+  }
   const base = `${env.S3_ENDPOINT.replace(/\/$/, '')}/${env.S3_BUCKET}`;
   async function req(method, key, { body = '', query = {}, headers = {} } = {}) {
     const url = new URL(`${base}/${key}`);
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
     const signed = await sign({ method, url, headers, body, keyId: env.S3_KEY_ID, secret: env.S3_SECRET, region: env.S3_REGION });
-    const res = await fetch(url, { method, headers: signed, body: method === 'PUT' ? body : undefined });
+    const res = await fetch(url, { method, headers: signed, body: method === 'PUT' ? body : undefined, signal: AbortSignal.timeout(10000) });
     // 404 без объекта: ответ get() = null; нет бакета (опечатка в S3_BUCKET): ошибка
     if (res.ok || (res.status === 404 && key)) {
       if (res.ok) return res;
@@ -67,11 +75,14 @@ export function bucket(env) {
       const out = [];
       for (let marker = ''; ;) {
         const xml = await (await req('GET', '', { query: { prefix, ...(marker && { marker }) } })).text();
+        const start = out.length;
         for (const [, c] of xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) {
           out.push({ key: unxml(/<Key>([\s\S]*?)<\/Key>/.exec(c)[1]), modified: Date.parse(/<LastModified>(.*?)<\/LastModified>/.exec(c)?.[1]) });
         }
-        if (!/<IsTruncated>true<\/IsTruncated>/.test(xml) || !out.length) return out;
-        marker = out.at(-1).key;
+        if (!/<IsTruncated>true<\/IsTruncated>/.test(xml)) return out;
+        const next = unxml(/<NextMarker>([\s\S]*?)<\/NextMarker>/.exec(xml)?.[1] ?? out.at(-1)?.key ?? '');
+        if (out.length === start || !next || next <= marker) throw new Error('s3: invalid list pagination');
+        marker = next;
       }
     },
   };

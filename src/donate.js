@@ -81,22 +81,34 @@ function mountStats(root, get, lang) {
   let sort = 'top', page = 0, seq = 0;
   const tabs = [...root.querySelectorAll('[data-sort]')];
   const more = root.querySelector('[data-more]');
-  const load = () => {
+  const error = root.querySelector('[data-error]');
+  const load = async (nextPage = 0) => {
     const my = ++seq;
-    return get(`/stats?sort=${sort}&page=${page}`).then((d) => { if (my === seq) renderStats(root, d, lang); });
+    more.disabled = true;
+    try {
+      const data = await get(`/stats?sort=${sort}&page=${nextPage}`);
+      if (my !== seq) return;
+      renderStats(root, data, lang);
+      page = nextPage;   // номер меняется только после успешного ответа текущей вкладки
+      error.hidden = true;
+    } catch {
+      if (my === seq) error.hidden = false;
+    } finally {
+      if (my === seq) more.disabled = false;
+    }
   };
-  load().catch(() => { root.querySelector('[data-error]').hidden = false; });
+  load();
   tabs.forEach((t) => t.addEventListener('click', () => {
     if (t.dataset.sort === sort) return;
     sort = t.dataset.sort;
     page = 0;
     tabs.forEach((x) => x.setAttribute('aria-pressed', String(x === t)));
-    load().catch(() => {});
+    more.hidden = true;
+    root.querySelector('[data-list]').replaceChildren();
+    load();
   }));
   more.addEventListener('click', () => {
-    more.disabled = true;
-    page += 1;
-    load().catch(() => { page -= 1; }).finally(() => { more.disabled = false; });
+    load(page + 1);
   });
 }
 

@@ -145,6 +145,17 @@ describe('POST /yoomoney', () => {
     const res = await exports.default.fetch(`${BASE}/yoomoney`, { method: 'POST', body: 'x='.padEnd(9000, 'x') });
     expect(res.status).toBe(413);
   });
+
+  it('chunked-тело ограничено в байтах, чтение прекращается после превышения', async () => {
+    let cancelled = false;
+    const stream = new ReadableStream({
+      start(controller) { controller.enqueue(new TextEncoder().encode('я'.repeat(5000))); },
+      cancel() { cancelled = true; },
+    });
+    const res = await worker.fetch(new Request(`${BASE}/yoomoney`, { method: 'POST', body: stream, duplex: 'half' }), env);
+    expect(res.status).toBe(413);
+    expect(cancelled).toBe(true);
+  });
 });
 
 describe('GET /stats', () => {

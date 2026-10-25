@@ -8,8 +8,13 @@
     "deploy": "wrangler deploy -c wrangler.prod.jsonc"
   },
   "devDependencies": {
-    "@cloudflare/vitest-plugin": "^1.4.1",
-    "vitest": "^5.0.2",
-    "wrangler": "^4.150.0"
+    "@cloudflare/vitest-plugin": "^1.4.7",
+    "vite": "^7.3.7",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.152.0"
+  },
+  "overrides": {
+    "@cloudflare/vitest-plugin": { "zod": "^4.6.6" },
+    "miniflare": { "undici": "^7.30.1" }
   }
 }

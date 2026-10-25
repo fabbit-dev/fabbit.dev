@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { exports } from 'cloudflare:workers';
 
 const SITE = 'https://fabbit.dev';
+let ip = 0;
 const register = (body, origin = SITE) => exports.default.fetch('https://donate.fabbit.dev/register', {
   method: 'POST',
-  headers: { 'content-type': 'application/json', origin, 'cf-connecting-ip': '203.0.113.1' },
+  headers: { 'content-type': 'application/json', origin, 'cf-connecting-ip': `203.0.113.${++ip}` },
   body: typeof body === 'string' ? body : JSON.stringify(body),
 });
 
@@ -34,8 +35,17 @@ describe('POST /register', () => {
     ['сообщение длиннее 200 символов', { message: 'я'.repeat(201) }],
     ['имя не строка', { name: 42 }],
     ['битый JSON', '{'],
+    ['null', 'null'],
+    ['массив', '[]'],
+    ['число', '42'],
   ])('%s: 400', async (_, body) => {
     expect((await register(body)).status).toBe(400);
+  });
+
+  it('тело больше 8 КБ без Content-Length: 413', async () => {
+    const res = await register({ extra: 'я'.repeat(5000) });
+    expect(res.status).toBe(413);
+    expect(res.headers.get('access-control-allow-origin')).toBe(SITE);
   });
 
   it('предзапрос CORS разрешён только сайту', async () => {

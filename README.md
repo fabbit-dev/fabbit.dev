@@ -1,28 +1,50 @@
-# fabbit.dev
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/fabbit-logo-dark.png">
+    <img src="docs/img/fabbit-logo.png" width="368" alt="Fabbit">
+  </picture>
+</h1>
 
-[**Русский**](README.md) | [English](README.en.md)
+<p align="center">Лендинг Fabbit: карманного прибора электронщика на ПЛИС.</p>
 
-Лендинг проекта [Fabbit](https://fabbit.dev). Русская версия в корне, английская в `/en/`.
+<p align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9-0969da?style=for-the-badge" alt="Русский"></a>
+  <a href="README.en.md"><img src="https://img.shields.io/badge/English-6e7781?style=for-the-badge" alt="English"></a>
+</p>
 
-## Локальный запуск
+<p align="center">
+  <a href="https://fabbit.dev">Сайт</a> ·
+  <a href="https://github.com/fabbit-dev/fabbit">Прибор</a> ·
+  <a href="CONTRIBUTING.md">Как помочь</a>
+</p>
 
-Нужны Node.js и npm.
+## Запуск
+
+Node.js 22 и npm.
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Сайт: http://localhost:5190.
+Откройте [localhost:5190](http://localhost:5190). Русская версия в `/`, английская в `/en/`.
 
-## Проверка и сборка
+| Команда | Что делает |
+|---|---|
+| `npm test` | Тесты Vitest |
+| `npm run build` | Сборка в `dist/` |
+| `npm run preview` | Просмотр сборки на [localhost:4173](http://localhost:4173) |
 
-```bash
-npm test
-npm run build
-npm run preview
+## Внутри
+
+Vite 7, JavaScript, three.js, GSAP и Tailwind 4. React собирает статичную разметку главы «Начинка»; в браузер React не загружаем.
+
+```text
+index.html, en/   страницы RU / EN
+src/             интерфейс, 3D-сцена и тесты
+src/build/       статичная глава «Начинка»
+public/          модель и графика
+worker/          API донатов, отдельный пакет
 ```
 
-Предпросмотр сборки: http://localhost:4173.
-
-Правила работы с репозиторием: [CONTRIBUTING.md](CONTRIBUTING.md).
+Изменения через PR. Пуш в `main` публикует сайт на GitHub Pages.

@@ -36,6 +36,7 @@
 
 /* Глобальные a и code в style.css не в слоях и сильнее утилит, поэтому правим их тут. */
 .build a { color: inherit; text-decoration: none; }
+.build .build-source { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; }
 /* шапка главы: заголовок слева, лид справа по нижнему краю — экономит высоту, глава влезает в экран */
 .build__head { display: grid; gap: var(--s4); margin-bottom: var(--s5); }
 .build__head .h2, .build__head .label { margin-bottom: 0; }

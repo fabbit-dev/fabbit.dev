@@ -127,6 +127,7 @@ describe('двуязычные данные', () => {
     p.specs.flat().forEach((v) => both(v, p.id));
     (p.tag ?? []).forEach((v) => both(v, p.id));
     if (p.note) both(p.note, p.id);
+    if (p.source) both(p.source.label, p.id);
   }));
   it('выноски на модели', () => CALLOUTS.forEach((c) => { both(c.title, c.groups[0]); both(c.sub, c.groups[0]); }));
   it('надписи экрана прибора', () => {

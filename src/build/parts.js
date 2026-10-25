@@ -1,7 +1,7 @@
 // Из чего сделан Fabbit. Одна запись — один блок в главе «Начинка»:
 // что это за деталь и зачем она в приборе одной фразой и цифры.
 // Архитектура: fabbit/README.md, статус платы: hardware/mainboard/VERIFY.md.
-// Геометрия и разъёмы обновляются отдельным шагом вместе с 3D-моделью.
+// Геометрия обновляется отдельным шагом вместе с 3D-моделью.
 // Тексты двуязычные: { ru, en }, язык выбирает pick() из src/i18n.js.
 
 export const PARTS = [
@@ -44,11 +44,13 @@ export const PARTS = [
       en: 'Connect probes, wires and an HDMI monitor.',
     },
     specs: [
-      [{ ru: 'Входы', en: 'Inputs' }, { ru: '2 × SMA через мезонин АЦП', en: '2 × SMA via the ADC mezzanine' }],
+      [{ ru: 'Аналоговый модуль', en: 'Analog module' }, { ru: 'осциллограф, генератор и мультиметр', en: 'oscilloscope, signal generator and multimeter' }],
+      ['SMA', { ru: '3 × SMA: входы CH1/CH2, выход GEN', en: '3 × SMA: CH1/CH2 inputs, GEN output' }],
       [{ ru: 'Видео', en: 'Video' }, 'HDMI Type A'],
       [{ ru: 'Порты', en: 'Ports' }, 'USB-C, microSD'],
-      [{ ru: 'Выводы', en: 'Pins' }, { ru: 'гребёнки A и B по 2 × 10, питание 2 × 2', en: 'headers A and B, 2 × 10 each, power 2 × 2' }],
-      [{ ru: 'Расширение', en: 'Expansion' }, { ru: 'мезонин на разъёме 60 контактов', en: 'mezzanine on a 60-pin connector' }],
+      [{ ru: 'Выводы', en: 'Pins' }, { ru: 'A 2 × 12, B 2 × 10, питание цели 2 × 2', en: 'A 2 × 12, B 2 × 10, target power 2 × 2' }],
+      ['MIPI-20', { ru: 'SWD, JTAG, trace 4 бит', en: 'SWD, JTAG, 4-bit trace' }],
+      [{ ru: 'Расширение', en: 'Expansion' }, { ru: 'BergStak: 80 контактов, шаг 0,8 мм, стек 9 мм', en: 'BergStak: 80 contacts, 0.8 mm pitch, 9 mm stack height' }],
     ],
   },
   {
@@ -105,14 +107,20 @@ export const PARTS = [
     },
     specs: [
       [{ ru: 'Корпус', en: 'Case' }, { ru: '88 × 150 × 22 мм', en: '88 × 150 × 22 mm' }],
-      [{ ru: 'Питание', en: 'Power' }, { ru: 'Li-Pol 1S, 65 × 40 × 9 мм', en: 'Li-Po 1S, 65 × 40 × 9 mm' }],
+      [{ ru: 'Аккумулятор', en: 'Battery' }, { ru: 'Li-pol 1S, 2800 мА·ч', en: 'Li-Po 1S, 2800 mAh' }],
+      ['USB-C', { ru: 'PD 3.1: заряд аккумулятора и выход 5 В до 1 А', en: 'PD 3.1: battery charging and 5 V output up to 1 A' }],
+      [{ ru: 'Расчётная автономность', en: 'Estimated runtime' }, { ru: '3–9 ч по режимам', en: '3–9 hours depending on mode' }],
     ],
+    source: {
+      href: 'https://github.com/fabbit-dev/fabbit/blob/main/journal/2026-10-17.md',
+      label: { ru: 'Расчёт', en: 'Calculation' },
+    },
   },
 ];
 
 // Неразрывные пробелы для вывода: число не отрывается от единицы и знака ×,
 // в русском ещё и короткий предлог — от следующего слова. Данные выше остаются обычным текстом.
 export const nbsp = (t, lang = 'ru') => {
-  const s = t.replace(/ (×|мм(?![а-яё])|mm\b|ГГц|GHz\b|Гбит\/с|Gbit\/s\b|бит(?![а-яё])|MS\/s\b|Впп|Вт|В(?![а-яё])|Ом|мкА|А(?![а-яё])|Vpp\b|V\b|W\b|Ω|µA\b|A\b)/g, ' $1').replace(/× /g, '× ');   // \b не работает после кириллицы
+  const s = t.replace(/ (×|мм(?![а-яё])|mm\b|ГГц|GHz\b|Гбит\/с|Gbit\/s\b|бит(?![а-яё])|MS\/s\b|Впп|Вт|В(?![а-яё])|Ом|мкА|А(?![а-яё])|мА·ч|mAh\b|ч(?![а-яё])|hours\b|Vpp\b|V\b|W\b|Ω|µA\b|A\b)/g, ' $1').replace(/× /g, '× ');   // \b не работает после кириллицы
   return lang === 'ru' ? s.replace(/(^|[\s(])(в|с|к|и|а|о|у|по|на|до|из|за|от|для|без|под)\s/gi, '$1$2 ') : s;
 };

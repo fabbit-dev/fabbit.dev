@@ -6,20 +6,19 @@ import { ChipFlight } from './ChipFlight.jsx';
 import { PARTS, nbsp } from './parts.js';
 import { pick } from '../i18n.js';
 
-// Широкий экран: сетка 4 × 4. На телефоне роли MCU/радио и транспорт
-// занимают всю строку: пояснения и ограничения остаются видимыми.
+// Карточки разъёмов и питания шире: все характеристики видны и на телефоне.
 const WIDE = {
   fpga: 'max-md:col-span-2 md:col-span-2 md:row-span-2',
   mcu: 'max-md:col-span-2',
   radio: 'max-md:col-span-2',
-  ports: 'max-md:col-span-2 md:row-span-2',
+  ports: 'col-span-2 md:row-span-2',
   fw: 'max-md:col-span-2',
-  sd: 'max-md:col-span-2 md:col-start-4 md:row-start-3',
+  sd: 'max-md:col-span-2',
   host: 'col-span-2',
   io: 'col-span-2',
-  case: 'col-span-2',
+  case: 'col-span-full',
 };
-const MOBILE_DETAILS = ['fpga', 'mcu', 'radio', 'fw', 'host', 'sd'];
+const MOBILE_DETAILS = ['fpga', 'mcu', 'radio', 'fw', 'host', 'sd', 'ports', 'case'];
 
 function Part({ part, lang }) {
   const L = (v) => pick(v, lang);
@@ -59,17 +58,20 @@ function Part({ part, lang }) {
       {(specs.length > 0 || tag) && (
         <CardContent className="mt-auto px-[var(--s4)]">
           {specs.length > 0 && <Separator className={cn('mb-[var(--s2)]', !details && 'max-md:hidden', ink && 'bg-[var(--fb-ink-line)]')} />}
-          <dl className={cn('m-0 grid gap-[var(--s1)] md:gap-x-[var(--s2)]', part.id !== 'radio' && 'md:grid-cols-[max-content_1fr]')}>
+          <dl className={cn('m-0 grid gap-[var(--s1)] md:gap-x-[var(--s2)]', part.id === 'ports' ? 'md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]' : part.id !== 'radio' && 'md:grid-cols-[max-content_1fr]')}>
             {[...specs, ...(tag ? [tag] : [])].map(([k, v], i) => (
               <div key={k} className={cn('md:contents', i > 0 && !details && 'max-md:hidden', tag?.[0] === k && 'md:hidden')}>
                 {/* метка, совпадающая с названием плитки (ПЛИС, Микроконтроллер), на телефоне заменяется на «Чип» */}
                 <dt className={cn('inline max-md:block font-mono text-[length:var(--t-mono-s)] tracking-[.06em] uppercase', ink ? 'opacity-60' : 'text-muted-foreground')}>{k === title ? <><span className="md:hidden">{L({ ru: 'Чип', en: 'Chip' })}</span><span className="max-md:hidden">{k}</span></> : k}&nbsp; </dt>
-                <dd className="m-0 inline max-md:block text-[length:var(--t-small)] leading-snug tracking-[-.01em] tabular-nums">{nbsp(v, lang)}</dd>
+                <dd className="m-0 min-w-0 inline max-md:block text-[length:var(--t-small)] leading-snug tracking-[-.01em] tabular-nums">{nbsp(v, lang)}</dd>
               </div>
             ))}
           </dl>
         </CardContent>
       )}
+      {part.source && <CardContent className="px-[var(--s4)]">
+        <a className="build-source text-[length:var(--t-small)]" href={part.source.href} target="_blank" rel="noopener">{L(part.source.label)}</a>
+      </CardContent>}
     </Card>
   );
 }

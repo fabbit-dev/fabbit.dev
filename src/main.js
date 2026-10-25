@@ -162,7 +162,7 @@ if (!reduced && matchMedia('(pointer: fine)').matches) {
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
-  });
+  }).catch(() => {});   // чанк не загрузился: остаётся родная прокрутка
 }
 
 // ── Переключатель языка ────────────────────────────
@@ -210,11 +210,24 @@ function setActiveProfile(i) {
 }
 setActiveProfile(0);
 
+// Выбор профиля — логика страницы, а не 3D: работает и при отказе WebGL/загрузки модели.
+ScrollTrigger.create({
+  trigger: '#profiles',
+  start: () => (mobile() ? `top ${stageH}px` : 'top top'),
+  end: () => (mobile() ? `bottom ${stageH + $('#profiles .sticky .wrap').offsetHeight}px` : 'bottom bottom'),
+  onUpdate: (self) => {
+    if (!document.documentElement.classList.contains('no-gl')) {
+      setActiveProfile(Math.max(0, Math.min(PROFILES.length - 1, Math.floor(self.progress * PROFILES.length))));
+    }
+  },
+});
+
 // Прокрутка страницы, где профиль i стоит посередине своего участка
 // (тот же участок, по которому считается активный профиль, см. триггер экрана в init3D).
 function profileY(i) {
   const sec = $('#profiles');
   const top = sec.getBoundingClientRect().top + scrollY;
+  if (document.documentElement.classList.contains('no-gl')) return top - nav.getBoundingClientRect().bottom - 12;
   const card = mobile() ? $('.sticky .wrap', sec).offsetHeight : 0;
   const start = top - (mobile() ? stageH : 0);
   const range = mobile() ? sec.offsetHeight - card : sec.offsetHeight - innerHeight;
@@ -235,7 +248,10 @@ function glide(y, duration) {
   gliding = true; syncSnap();
   lenis.scrollTo(y, { duration, onComplete: () => { gliding = false; syncSnap(); } });
 }
-function scrollToProfile(i) { glide(profileY(i), 1.4); }
+function scrollToProfile(i) {
+  if (document.documentElement.classList.contains('no-gl')) setActiveProfile(i);
+  glide(profileY(i), 1.4);
+}
 
 // ── Телефон: профили по одному за жест ─────────────
 // У каждого профиля своя точка привязки со scroll-snap-stop: always: браузер не пролетает через неё,
@@ -250,7 +266,7 @@ let snapZone = null;
 function layoutSnap() {
   snapMarks.replaceChildren();
   snapZone = null; snapYs = [];
-  if (!mobile()) { syncSnap(); return; }
+  if (!mobile() || document.documentElement.classList.contains('no-gl')) { syncSnap(); return; }
   const secTop = $('#profiles').getBoundingClientRect().top + scrollY;
   const lead = $('.hero .actions');   // нижний блок hero
   const leadBottom = lead.getBoundingClientRect().bottom - (gsap.getProperty(lead, 'y') || 0) + scrollY;
@@ -418,6 +434,11 @@ function fallback(err) {
   const img = $('.hero__fallback');
   img.hidden = false; img.style.opacity = 1;
   ScrollTrigger.refresh();
+  let rt;
+  addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => { layoutStage(); ScrollTrigger.refresh(); }, 150);
+  });
 }
 
 if (!webglOK()) fallback();
@@ -587,7 +608,6 @@ async function init3D() {
     trigger: '#profiles',
     start: () => (phone ? `top ${stageH}px` : 'top top'),
     end: () => (phone ? `bottom ${stageH + $('#profiles .sticky .wrap').offsetHeight}px` : 'bottom bottom'),
-    onUpdate: (self) => setActiveProfile(Math.max(0, Math.min(PROFILES.length - 1, Math.floor(self.progress * PROFILES.length)))),
     onToggle: (self) => {
       if (self.isActive) screen.setMode('profile', Math.max(0, activeProfile));
       showFlatScreen(phone && self.isActive);

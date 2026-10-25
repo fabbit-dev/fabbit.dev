@@ -121,6 +121,59 @@ describe('статистика', () => {
     expect(root.querySelector('[data-error]').hidden).toBe(false);
     expect(root.querySelector('[data-total]').textContent).toBe('');
   });
+
+  it('ошибка старой страницы не меняет пагинацию новой вкладки', async () => {
+    const root = statsDom();
+    let rejectOld;
+    const fetchJson = vi.fn((path) => path === '/stats?sort=top&page=1'
+      ? new Promise((_, reject) => { rejectOld = reject; })
+      : Promise.resolve({ ...(path.includes('recent') ? RECENT : TOP), more: true }));
+    mountDonate({ stats: root, fetchJson });
+    await flush();
+    root.querySelector('[data-more]').click();
+    root.querySelector('[data-sort="recent"]').click();
+    await flush();
+    rejectOld(new Error('old request'));
+    await flush();
+    root.querySelector('[data-more]').click();
+    await flush();
+    expect(fetchJson).toHaveBeenLastCalledWith('/stats?sort=recent&page=1');
+    expect(root.querySelector('[data-error]').hidden).toBe(true);
+  });
+
+  it('устаревшая ошибка не перекрывает успешную вкладку; новая ошибка видна и снимается после успеха', async () => {
+    const root = statsDom();
+    let rejectOld;
+    const fetchJson = vi.fn().mockImplementationOnce(() => new Promise((_, reject) => { rejectOld = reject; }))
+      .mockResolvedValueOnce(RECENT).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(RECENT);
+    mountDonate({ stats: root, fetchJson });
+    const recent = root.querySelector('[data-sort="recent"]'), top = root.querySelector('[data-sort="top"]');
+    recent.click();
+    await flush();
+    rejectOld(new Error('stale'));
+    await flush();
+    expect(root.querySelector('[data-error]').hidden).toBe(true);
+    top.click();
+    await flush();
+    expect(root.querySelector('[data-error]').hidden).toBe(false);
+    recent.click();
+    await flush();
+    expect(root.querySelector('[data-error]').hidden).toBe(true);
+  });
+
+  it('повтор страницы после ошибки не пропускает строки', async () => {
+    const root = statsDom();
+    const fetchJson = vi.fn().mockResolvedValueOnce({ ...TOP, more: true })
+      .mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ ...TOP, page: 1 });
+    mountDonate({ stats: root, fetchJson });
+    await flush();
+    const more = root.querySelector('[data-more]');
+    more.click();
+    await flush();
+    more.click();
+    await flush();
+    expect(fetchJson.mock.calls.slice(1).map(([path]) => path)).toEqual(['/stats?sort=top&page=1', '/stats?sort=top&page=1']);
+  });
 });
 
 function formDom() {

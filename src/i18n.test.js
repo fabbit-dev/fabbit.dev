@@ -54,12 +54,12 @@ describe('две версии сайта', () => {
   });
 
   it('на первом экране обозначает разработку, в выносках нет старого MCU', () => {
-    expect(ru.querySelector('.hero__lead').textContent).toMatch(/^Разрабатываем/);
-    expect(en.querySelector('.hero__lead').textContent).toMatch(/^We’re developing/);
+    expect(ru.querySelector('.hero__lead').textContent).toMatch(/Проект в\s+разработке/);
+    expect(en.querySelector('.hero__lead').textContent).toMatch(/project in\s+development/);
     expect(JSON.stringify(CALLOUTS)).not.toContain('ESP32-C3');
     const pcb = CALLOUTS.find((c) => c.groups.includes('PCB'));
-    expect(pick(pcb.sub, 'ru')).toContain('схемы пока нет');
-    expect(pick(pcb.sub, 'en')).toContain('no schematic yet');
+    expect(pick(pcb.sub, 'ru')).toBe('');
+    expect(pick(pcb.sub, 'en')).toBe('');
   });
 
   it('автоопределение языка стоит только в корне', () => {

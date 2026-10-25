@@ -30,7 +30,7 @@ export const CALLOUTS = [
   { groups: ['I9'], title: { ru: 'ПЛИС Artix-7', en: 'Artix-7 FPGA' }, sub: { ru: 'модуль Colorlight i9+', en: 'Colorlight i9+ module' }, dir: [0, 0, -1] },
   { groups: ['Mezz'], title: { ru: 'Мезонин АЦП', en: 'ADC mezzanine' }, sub: { ru: 'два АЦП: быстрый и точный', en: 'two ADCs: fast and precise' }, dir: [0, 0, -1] },
   { groups: ['SMA'], title: '2 × SMA', sub: { ru: 'входы для щупов осциллографа', en: 'scope probe inputs' }, dir: [0, 0.4, -1] },
-  { groups: ['PCB'], title: { ru: 'Главная плата', en: 'Mainboard' }, sub: { ru: 'механическая компоновка, схемы пока нет', en: 'mechanical layout; no schematic yet' }, dir: [0, 0, -1], at: [36, 122, -7.5] },
+  { groups: ['PCB'], title: { ru: 'Главная плата', en: 'Mainboard' }, sub: '', dir: [0, 0, -1], at: [36, 122, -7.5] },
   { groups: ['Battery'], title: { ru: 'Аккумулятор', en: 'Battery' }, sub: 'Li-Pol 1S', dir: [0, 0, -1] },
   { groups: ['Ports'], title: 'HDMI · USB-C · microSD', sub: { ru: 'нижний торец', en: 'bottom edge' }, dir: [0, -0.3, -1] },
   // Выноски H417/C5 добавим с новой геометрией: старая группа ESP не соответствует их расположению.

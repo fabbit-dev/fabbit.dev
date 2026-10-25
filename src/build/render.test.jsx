@@ -10,7 +10,7 @@ describe('renderBuild', () => {
     expect(doc.querySelectorAll('article').length).toBe(PARTS.length);
     expect(doc.querySelector('#part-mcu').textContent).toContain('CH32H417');
     expect(doc.querySelector('#part-radio').textContent).toContain('ESP32-C5');
-    expect(doc.querySelector('.build__status').textContent).toContain('ESP32-S3');
+    expect(doc.querySelector('.build__status')).toBeNull();
     expect(doc.querySelector('#part-fpga [data-flight]')).not.toBeNull();   // чип с анимацией, её включает main.js
   });
 });

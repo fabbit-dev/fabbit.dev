@@ -33,13 +33,14 @@ describe('состав прибора', () => {
     expect(JSON.stringify(PARTS)).not.toContain('ESP32-C3');
   });
 
-  it.each(['ru', 'en'])('описывает USB3/UHSIF как целевой транспорт, не измеренный поток (%s)', (lang) => {
+  it.each(['ru', 'en'])('сохраняет USB3/H417/UHSIF без отчёта о разработке (%s)', (lang) => {
     const host = PARTS.find((p) => p.id === 'host');
-    expect(pick(host.what, lang)).toMatch(/CH32H417.*USB 3\.0/);
-    expect(pick(host.what, lang)).toMatch(lang === 'ru' ? /Планируем/ : /We plan/);
+    expect(pick(host.what, lang)).toContain('CH32H417');
+    expect(pick(host.what, lang)).toContain('USB 3.0');
     expect(host.specs.map(([, v]) => pick(v, lang)).join(' ')).toMatch(/UHSIF/);
     expect(host.specs.map(([, v]) => pick(v, lang)).join(' ')).toMatch(/16/);
-    expect(pick(host.note, lang)).toMatch(lang === 'ru' ? /5 Гбит\/с.*скорость линии USB.*ещё не измерен/ : /5 Gbit\/s.*USB line rate.*has not been measured/);
+    expect(host.note).toBeUndefined();
+    expect(pick(host.what, lang)).not.toMatch(/Планируем|We plan|измерен|measured/);
     expect(allSpecs().map(([, v]) => v).join(' ')).toMatch(/microSD/);
   });
 
@@ -51,7 +52,7 @@ describe('состав прибора', () => {
   it('объясняет каждую часть одной короткой фразой', () => {
     for (const p of PARTS) {
       for (const lang of ['ru', 'en']) {
-        expect(pick(p.what, lang).length, `${p.id} ${lang}`).toBeGreaterThan(p.id === 'radio' ? 30 : 40);
+        expect(pick(p.what, lang).length, `${p.id} ${lang}`).toBeGreaterThan(30);
         expect(pick(p.what, lang).length, `${p.id} ${lang}`).toBeLessThanOrEqual(120);
       }   // карточка читается за секунду
       expect(p.role, p.id).toBeUndefined();

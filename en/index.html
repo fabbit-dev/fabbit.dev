@@ -83,7 +83,7 @@
             <button class="hero__bunny" type="button" aria-label="Fabbit bunny: play a scene"><svg id="bunny" aria-hidden="true"></svg></button>
           </div>
           <h1 class="hero__title" id="top-title"><span class="sr-only" translate="no">Fabbit. </span><span class="hero__claim reveal">Pocket multitool for&nbsp;electronics.</span></h1>
-          <p class="lead hero__lead reveal">We’re developing a pocket oscilloscope, logic analyzer and&nbsp;<span class="nowrap">retro console</span>. A project by high school students.</p>
+          <p class="lead hero__lead reveal">Oscilloscope, logic analyzer and&nbsp;<span class="nowrap">retro console</span>. A project in&nbsp;development.</p>
           <div class="actions reveal">
             <a class="btn btn--ink" href="https://github.com/fabbit-dev/fabbit" target="_blank" rel="noopener">Source on GitHub</a>
             <a class="btn" href="#support">Support <span aria-hidden="true">↓</span></a>
@@ -104,7 +104,7 @@
             <div class="profiles__head">
               <p class="label reveal"><span class="label__n">01</span>Functions</p>
               <h2 class="h2 reveal" id="profiles-title">Instruments<br>on&nbsp;one board.</h2>
-              <p class="lead reveal">We’re developing the functions below. CH32H417 handles the bench supply and&nbsp;multimeter.</p>
+              <p class="lead reveal">CH32H417 handles the bench supply and&nbsp;multimeter. The FPGA runs profile logic.</p>
             </div>
             <ol class="plist reveal" id="plist" aria-label="Functions"></ol>
             <div class="pmeta tech reveal">
@@ -113,11 +113,10 @@
               <span class="pmeta__bar" aria-hidden="true"></span>
               <button class="pmeta__step" type="button" data-step="1" aria-label="Next function"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
             </div>
-            <p class="profiles__demo reveal">Interface demo. On-screen values are illustrative. Doom illustrates the retro concept; NES is&nbsp;confirmed on&nbsp;the bench setup.</p>
+            <p class="profiles__demo reveal">Interface demo. Example values.</p>
           </div>
         </div>
       </section>
-      <aside class="profile-ideas"><div class="wrap"><p>Early ideas: neural accelerator, cable tester, bus analyzer, programmer and&nbsp;terminal. These are outside the current target set.</p></div></aside>
 
       <!-- 3. Exploded view (sticky) -->
       <section class="scene device" id="device" data-theme="light" aria-labelledby="device-title">
@@ -136,7 +135,7 @@
           <div class="wrap col blueprint__inner">
             <p class="label reveal"><span class="label__n">03</span>Blueprint</p>
             <h2 class="h2 h2--mono reveal" id="blueprint-title">88×150×22&nbsp;mm</h2>
-            <p class="lead reveal">The size of the original Game Boy, one centimeter thinner. The case model lives in the repo: download <a href="https://github.com/fabbit-dev/fabbit/blob/main/hardware/case/fabbit_case.FCStd" target="_blank" rel="noopener"><code translate="no">fabbit_case.FCStd</code></a> and print your own.</p>
+            <p class="lead reveal">A case for SLA printing. FreeCAD model: <a href="https://github.com/fabbit-dev/fabbit/blob/main/hardware/case/fabbit_case.FCStd" target="_blank" rel="noopener"><code translate="no">fabbit_case.FCStd</code></a>.</p>
           </div>
         </div>
       </section>
@@ -151,7 +150,7 @@
         <div>
           <p class="label reveal"><span class="label__n">05</span>Team</p>
           <h2 class="h2 reveal" id="team-title">We build Fabbit <br>in&nbsp;10th&nbsp;grade.</h2>
-          <p class="lead team__lead reveal">We make the schematics, FPGA logic, firmware and case ourselves, and log each step in a journal, failures too.</p>
+          <p class="lead team__lead reveal">We design the circuits, FPGA logic, firmware and case. We publish measurements and failures in the journal.</p>
         </div>
         <div class="crew">
           <article class="person reveal" aria-labelledby="p-roma">
@@ -182,8 +181,8 @@
       <div class="wrap open__grid">
         <div>
           <p class="label reveal"><span class="label__n">06</span>Code</p>
-          <h2 class="h2 reveal" id="open-title">Open from<br>the&nbsp;first commit.</h2>
-          <p class="lead reveal">The repo holds schematics, FPGA and microcontroller code, and a journal of measurements and dead ends. Hardware is under <span class="nowrap">CERN-OHL-S-2.0</span> and code under MIT: change it and ship your own version.</p>
+          <h2 class="h2 reveal" id="open-title">Open code,<br>boards and&nbsp;case.</h2>
+          <p class="lead reveal">The repository contains FPGA code, firmware, boards, case files and the journal. Code: MIT. Hardware: <span class="nowrap">CERN-OHL-S-2.0</span>.</p>
           <div class="actions reveal">
             <a class="btn btn--paper" href="https://github.com/fabbit-dev/fabbit/subscription" target="_blank" rel="noopener">Follow development</a>
             <a class="btn btn--line" href="https://github.com/fabbit-dev/fabbit/tree/main/journal" target="_blank" rel="noopener">Journal</a>

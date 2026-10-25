@@ -312,8 +312,6 @@ section[id] { scroll-margin-top: calc(var(--nav-h) + var(--s3)); }
 .no-gl .profiles { height: auto; }
 .no-gl .profiles .sticky { position: static; height: auto; overflow: visible; }
 .no-gl .profiles__inner { padding-bottom: var(--s6); }
-.profile-ideas { position: relative; z-index: 2; background: var(--fb-white); padding: var(--s5) 0; }
-.profile-ideas p { margin: 0; max-width: var(--col); color: var(--fb-text-2); font-size: var(--t-small); line-height: var(--lh-body); }
 .plist.is-measuring-descriptions li { display: block !important; }
 .plist.is-measuring-descriptions .d { height: auto !important; max-height: none !important; padding-top: 0 !important; }
 .pmeta {

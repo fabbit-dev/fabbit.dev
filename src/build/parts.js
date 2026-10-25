@@ -10,8 +10,8 @@ export const PARTS = [
     title: { ru: 'ПЛИС', en: 'FPGA' },
     icon: 'bitstream',
     what: {
-      ru: 'Микросхема из тысяч логических блоков. Профиль соединяет их в схему нужного прибора.',
-      en: 'A chip made of thousands of logic blocks. A profile wires them into the circuit of the instrument you need.',
+      ru: 'Профиль соединяет логические блоки ПЛИС в схему прибора.',
+      en: 'A profile connects FPGA logic blocks into an instrument circuit.',
     },
     specs: [[{ ru: 'ПЛИС', en: 'FPGA' }, { ru: 'Artix-7, модуль Colorlight i9+', en: 'Artix-7, Colorlight i9+ module' }]],
   },
@@ -33,15 +33,15 @@ export const PARTS = [
       ru: 'ESP32-C5 — отдельный радиосопроцессор.',
       en: 'ESP32-C5 is a separate wireless coprocessor.',
     },
-    specs: [[{ ru: 'В целевой конфигурации', en: 'Target configuration' }, { ru: 'Wi-Fi 6 на 2,4 и 5 ГГц, BLE 5, 802.15.4', en: 'Dual-band 2.4/5 GHz Wi-Fi 6, BLE 5 and 802.15.4' }]],
+    specs: [[{ ru: 'Связь', en: 'Connectivity' }, { ru: 'Wi-Fi 6 на 2,4 и 5 ГГц, BLE 5, 802.15.4', en: 'Dual-band 2.4/5 GHz Wi-Fi 6, BLE 5 and 802.15.4' }]],
   },
   {
     id: 'ports',
     title: { ru: 'Входы и выводы', en: 'Inputs and outputs' },
     icon: 'bus',
     what: {
-      ru: 'Сюда вы подключаете щупы, провода с гребёнки и монитор по HDMI.',
-      en: 'You plug in probes, header wires and an HDMI monitor here.',
+      ru: 'Подключайте щупы, провода и HDMI-монитор.',
+      en: 'Connect probes, wires and an HDMI monitor.',
     },
     specs: [
       [{ ru: 'Входы', en: 'Inputs' }, { ru: '2 × SMA через мезонин АЦП', en: '2 × SMA via the ADC mezzanine' }],
@@ -57,8 +57,8 @@ export const PARTS = [
     tag: [{ ru: 'Задачи', en: 'Tasks' }, { ru: 'меню, профили, связь с ПК', en: 'menu, profiles, PC link' }],   // ключевая строка на телефоне, где нет характеристик
     icon: 'terminal',
     what: {
-      ru: 'Прошивка супервизора управляет меню, сменой профилей, питанием и измерениями БП и мультиметра.',
-      en: 'The supervisor firmware manages the menu, profile switching, power, and bench supply and multimeter measurements.',
+      ru: 'Прошивка управляет меню, сменой профилей, питанием, БП и мультиметром.',
+      en: 'The firmware controls the menu, profile switching, power, bench supply and multimeter.',
     },
     specs: [],
   },
@@ -67,8 +67,8 @@ export const PARTS = [
     title: { ru: 'Профиль', en: 'Profile' },
     icon: 'sd',
     what: {
-      ru: 'Профиль задаёт логику прибора в ПЛИС. В целевой архитектуре его выбирают из флеш-слота или с microSD.',
-      en: 'A profile defines instrument logic in the FPGA. The target architecture supports profiles from a flash slot or microSD.',
+      ru: 'Профиль задаёт схему прибора в ПЛИС. Загрузка из флеш-слота или с microSD.',
+      en: 'A profile defines the instrument circuit in the FPGA. Load it from a flash slot or microSD.',
     },
     specs: [[{ ru: 'Носитель', en: 'Storage' }, { ru: 'флеш-слот или microSD', en: 'flash slot or microSD' }]],
   },
@@ -77,22 +77,18 @@ export const PARTS = [
     title: { ru: 'Компьютер', en: 'Computer' },
     icon: 'usb',
     what: {
-      ru: 'Планируем передавать записи ЛА и trace через CH32H417 по USB 3.0.',
-      en: 'We plan to stream logic analyzer and trace captures through CH32H417 over USB 3.0.',
+      ru: 'Связь с ПК: USB 3.0 через CH32H417.',
+      en: 'PC connection: USB 3.0 through CH32H417.',
     },
-    specs: [[{ ru: 'Связь с ПЛИС', en: 'FPGA link' }, { ru: 'UHSIF, 16 бит', en: '16-bit UHSIF' }]],
-    note: {
-      ru: '5 Гбит/с — скорость линии USB. Полезный поток в целевом приборе ещё не измерен.',
-      en: '5 Gbit/s is the USB line rate. Application throughput on the target device has not been measured.',
-    },
+    specs: [[{ ru: 'Шина ПЛИС', en: 'FPGA bus' }, { ru: 'UHSIF, 16 бит', en: '16-bit UHSIF' }]],
   },
   {
     id: 'io',
     title: { ru: 'Экран и кнопки', en: 'Screen and buttons' },
     icon: 'cursor',
     what: {
-      ru: 'Держите его как карманную консоль: экран сверху, крестовина и кнопки под большими пальцами.',
-      en: 'Hold it like a handheld console: screen on top, D-pad and buttons under your thumbs.',
+      ru: 'Экран сверху. Крестовина и кнопки под большими пальцами.',
+      en: 'Screen on top. D-pad and buttons under your thumbs.',
     },
     specs: [
       [{ ru: 'Экран', en: 'Screen' }, { ru: '3,5″, модуль 70 × 51 мм', en: '3.5″, 70 × 51 mm module' }],
@@ -104,8 +100,8 @@ export const PARTS = [
     title: { ru: 'Корпус и питание', en: 'Case and power' },
     icon: 'battery-full',
     what: {
-      ru: 'Корпус вы печатаете сами по модели из репозитория. Плоский аккумулятор стоит под задней крышкой.',
-      en: 'You print the case yourself from the model in the repo. A flat battery sits under the back cover.',
+      ru: 'Корпус для SLA-печати. Аккумулятор под задней крышкой.',
+      en: 'A case for SLA printing. The battery sits under the back cover.',
     },
     specs: [
       [{ ru: 'Корпус', en: 'Case' }, { ru: '88 × 150 × 22 мм', en: '88 × 150 × 22 mm' }],

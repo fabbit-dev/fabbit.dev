@@ -26,6 +26,7 @@ describe('целевые функции', () => {
     expect(desc('multimeter')).toContain('CH32H417');
     expect(desc('psu')).toMatch(lang === 'ru' ? /0,8–22 В.*20 Вт от PD.*5 Вт от батареи.*0,2 мкА…3 А при выходе до 5,5 В/ : /0\.8–22 V.*20 W from PD.*5 W from the battery.*0\.2 µA to 3 A at output voltages up to 5\.5 V/);
     expect(desc('glitch')).not.toMatch(/такт|clock|40|ns|нс/);
-    expect(desc('retro')).toMatch(/NES.*ESP32-S3.*i9\+/);
+    expect(desc('retro')).toMatch(lang === 'ru' ? /Ретро-ядра на экране и HDMI/ : /Retro cores on the screen and HDMI/);
+    expect(desc('retro')).not.toMatch(/стенд|bench|ESP32-S3/);
   });
 });

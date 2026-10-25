@@ -70,9 +70,6 @@ function Part({ part, lang }) {
           </dl>
         </CardContent>
       )}
-      {part.note && <CardContent className="px-[var(--s4)]">
-        <p className="m-0 text-[length:var(--t-small)] leading-[var(--lh-body)] text-muted-foreground">{nbsp(L(part.note), lang)}</p>
-      </CardContent>}
     </Card>
   );
 }
@@ -80,23 +77,11 @@ function Part({ part, lang }) {
 const HEAD = {
   ru: {
     label: 'Начинка', title: 'Внутри',
-    lead: 'В целевой архитектуре CH32H417 управляет прибором, ПЛИС выполняет логику профиля, ESP32-C5 отвечает за радио.',
-    status: 'Главная плата: механическая компоновка, схемы пока нет. NES работает на стенде ESP32-S3 + i9+. Порт на H417, поток USB3 и работу Wi-Fi/BLE в приборе ещё предстоит проверить.',
-    architecture: [
-      'При включении стартует golden из флеша i9+. Карта для его запуска не нужна. При сбое предусмотрен аварийный образ из флеша супервизора по JTAG. Загрузку с microSD и аварийное восстановление на H417 ещё предстоит проверить.',
-      'Общая оболочка ПЛИС: связь с супервизором, SDRAM, видео, UART-мост порта B и безопасные состояния выводов. Меню поверх игры ещё в плане.',
-      'На текущем стенде golden собираем в Vivado. Возврат из профиля openXC7 требует перезапуска питания модуля.',
-    ],
+    lead: 'CH32H417 управляет прибором, ПЛИС выполняет логику профиля, ESP32-C5 отвечает за радио.',
   },
   en: {
     label: 'Internals', title: 'Inside',
-    lead: 'In the target architecture, CH32H417 manages the device, the FPGA runs the profile logic, and ESP32-C5 handles wireless connectivity.',
-    status: 'Mainboard: mechanical layout; no schematic yet. NES runs on the ESP32-S3 + i9+ bench setup. The H417 port, USB3 streaming and Wi-Fi/BLE operation in the device still need verification.',
-    architecture: [
-      'Golden starts from the i9+ flash at power-up, without a memory card. The recovery design loads a rescue image from supervisor flash over JTAG. microSD loading and H417 recovery still need verification.',
-      'The shared FPGA shell provides the supervisor link, SDRAM, video, a port B UART bridge and safe pin states. The in-game menu overlay remains planned.',
-      'On the current bench setup, we build golden with Vivado. Returning from an openXC7 profile requires cycling module power.',
-    ],
+    lead: 'CH32H417 controls the device, the FPGA runs profile logic, and ESP32-C5 handles wireless connectivity.',
   },
 };
 
@@ -111,12 +96,8 @@ export function Build({ lang = 'ru' }) {
         </div>
         <p className="lead reveal">{nbsp(h.lead, lang)}</p>
       </div>
-      <p className="build__status reveal text-[length:var(--t-small)] leading-[var(--lh-body)] text-muted-foreground">{nbsp(h.status, lang)}</p>
       <div className="grid grid-flow-row-dense grid-cols-2 gap-[var(--s3)] md:grid-cols-4">
         {PARTS.map((p) => <Part key={p.id} part={p} lang={lang} />)}
-      </div>
-      <div className="build__architecture">
-        {h.architecture.map((text) => <p key={text} className="reveal">{nbsp(text, lang)}</p>)}
       </div>
     </div>
   );

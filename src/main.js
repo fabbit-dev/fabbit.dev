@@ -44,13 +44,22 @@ let stageH = innerHeight, storyTail = 0;
 let svhPx = innerHeight;
 const nat = {};   // телефон: высота текста глав истории, по id секции
 const root = document.documentElement.style;
+// CSS владеет ритмом; 3D использует те же отступы при замере доступного места.
+const space = {};
+function measureSpacing() {
+  const css = getComputedStyle(document.documentElement);
+  for (const name of ['hero-pad-start', 'hero-pad-end', 'screen-gutter', 'screen-gap', 'stage-label-space', 's4']) {
+    space[name] = parseFloat(css.getPropertyValue(`--${name}`));
+  }
+}
 function layoutStage() {
+  measureSpacing();
   if (!mobile()) { for (const v of ['--stage-h', '--nat-profiles', '--nat-blueprint', '--canvas-h']) root.removeProperty(v); stageH = svhPx = innerHeight; storyTail = 0; bandBg(); return; }
   svhPx = $('.stage').offsetHeight || innerHeight;
-  // hero тоже карточка: логотип, заголовок и кнопки должны влезть под полосу с запасом 24 px снизу
+  // hero тоже карточка: логотип, заголовок и кнопки должны влезть под полосу с CSS-отступами
   // по offsetTop: анимация появления сдвигает блоки transform-ом и сбила бы замер
   const brand = $('.hero__brand'), actions = $('.hero .actions');
-  const hero = actions.offsetTop + actions.offsetHeight - brand.offsetTop + 24 + 32;   // + отступы .hero__inner сверху и снизу
+  const hero = actions.offsetTop + actions.offsetHeight - brand.offsetTop + space['hero-pad-start'] + space['hero-pad-end'];
   // карточки растянуты до низа экрана (CSS), а полосе нужна высота их текста: на время замера растяжку снимаем
   document.documentElement.classList.add('is-measuring');
   const cards = $$('.sticky .wrap').map((w) => w.offsetHeight);
@@ -129,8 +138,8 @@ function bandBg() {
 // Где на телефоне стоит плоский экран профилей (#stage-screen): поля 16 px, сверху шапка + 12, снизу текст главы, 4 : 3.
 // Те же числа берёт поза прибора K.profiles в init3D.
 function flatRect() {
-  const top = nav.getBoundingClientRect().bottom + 12, boxH = svhPx - nat.profiles - top - 16;
-  const w = Math.min(innerWidth - 32, boxH * 4 / 3), h = w * 3 / 4;
+  const top = nav.getBoundingClientRect().bottom + space['screen-gap'], boxH = svhPx - nat.profiles - top - space['screen-gutter'];
+  const w = Math.min(innerWidth - 2 * space['screen-gutter'], boxH * 4 / 3), h = w * 3 / 4;
   const x0 = (innerWidth - w) / 2, y0 = top + (boxH - h) / 2;
   return { x0, x1: x0 + w, y0, y1: y0 + h };
 }
@@ -499,7 +508,7 @@ async function init3D() {
   // Прибор вписывается в полосу между навигацией и её нижним краем, с местом под подсказку.
   // key — глава: прибор до верха её текста; без key (hero) — до низа непрозрачной полосы
   // запас снизу — под подпись детали или подсказку; в hero их нет, прибор встаёт почти вплотную к заголовку
-  const band = (key) => ({ top: nav.getBoundingClientRect().bottom, bottom: (key ? svhPx - nat[key] : stageH) - (key === 'hero' ? 8 : 40), frameH: frameH(), pad: 16 });
+  const band = (key) => ({ top: nav.getBoundingClientRect().bottom, bottom: (key ? svhPx - nat[key] : stageH) - (key === 'hero' ? space['screen-gap'] : space['stage-label-space']), frameH: frameH(), pad: space.s4 });
   // Телефон на боку: кадр низкий, прибор вписывается по высоте между шапкой и низом экрана,
   // а не стоит на фиксированной высоте (иначе верх уходит под навигацию)
   const fitLow = (pose, silhouette) => (isLandscapePhone(innerWidth, innerHeight)
@@ -515,8 +524,8 @@ async function init3D() {
         const b = band('profiles');
         // Экран в 3D встаёт ровно туда, где его сменит плоский холст (#stage-screen: поля 16 px,
         // сверху шапка + 12, 4 : 3) — тогда смена незаметна. Корпус шире экрана и уходит за края кадра.
-        const padTop = b.top + 12, boxH = svhPx - nat.profiles - padTop - 16;
-        const wFlat = Math.min(innerWidth - 32, boxH * 4 / 3);
+        const padTop = b.top + space['screen-gap'], boxH = svhPx - nat.profiles - padTop - space['screen-gutter'];
+        const wFlat = Math.min(innerWidth - 2 * space['screen-gutter'], boxH * 4 / 3);
         const wScreen = wFlat * 70 / 68;                    // модуль 70 мм, видимая часть экрана 68 мм
         const dev = wScreen / 70 * 150;                                                 // высота корпуса, px
         const cy = padTop + boxH / 2 + (116 - 75) / 150 * dev;                          // центр корпуса, px
@@ -590,7 +599,7 @@ async function init3D() {
     if (flatAttached) return;
     flatAttached = true;
     flat.append(screen.canvas);
-    const w = flat.clientWidth - 32;
+    const w = flat.clientWidth - 2 * space['screen-gutter'];
     if (screen.setScale(Math.min(2.5, Math.max(1, Math.ceil(w * devicePixelRatio / 640 * 4) / 4)))) sc.screenResized();
   }
   function showFlatScreen(on) {

@@ -38,11 +38,15 @@
 .build a { color: inherit; text-decoration: none; }
 .build .build-source { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; }
 /* шапка главы: заголовок слева, лид справа по нижнему краю — экономит высоту, глава влезает в экран */
-.build__head { display: grid; gap: var(--s4); margin-bottom: var(--s5); }
+.build__head { display: grid; gap: var(--space-heading); margin-bottom: var(--space-content); }
 .build__head .h2, .build__head .label { margin-bottom: 0; }
-.build__head .label { margin-bottom: var(--s5); }
+.build__head .label { margin-bottom: var(--space-heading); }
+.build__grid { gap: var(--space-grid); }
+.build-part { min-width: 0; gap: var(--space-card-stack); padding-block: var(--space-card); scroll-margin-top: calc(var(--nav-h) + var(--s3)); }
+.build-part > [data-slot="card-header"], .build-part > [data-slot="card-content"] { padding-inline: var(--space-card); }
+.build-part__specs { row-gap: var(--s2); }
+@media (max-width: 860px) { .build-part__specs dd { margin-top: var(--s1); } }
 @media (min-width: 861px) { .build__head { grid-template-columns: 1fr 1fr; align-items: end; } }
-@media (max-width: 860px) { .build__head .label { margin-bottom: var(--s4); } }   /* ритм телефона: метка → 16 → заголовок */
 
 /* Пиксельный Artix-7 в блоке ПЛИС дрожит, полоски разлетаются во все стороны: чип будто вылетает из экрана.
    Чип и полоски в одной сетке: --cell = 2 px, чип 56 клеток (112 px), сцена 200×120.

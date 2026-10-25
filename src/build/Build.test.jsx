@@ -11,6 +11,17 @@ describe('<Build />', () => {
     expect(h2.id).toBe('how-title');   // на него ссылается aria-labelledby секции #how
   });
 
+  it('использует общие классы ритма вместо независимых отступов карточек', () => {
+    const { container } = render(<Build />);
+    expect(container.querySelector('.build__grid')).not.toBeNull();
+    for (const card of container.querySelectorAll('.build-part')) {
+      // Базовый shadcn оставляет gap-6/py-6; unlayered .build-part задаёт токены острова.
+      expect(card.className).not.toMatch(/(?:^|\s)(?:max-md:|md:)?(?:p[xy]?|gap)-\[/);
+      expect(card.querySelector('.build-part__specs')).not.toBeNull();
+      expect(card.querySelector('h3').className).toContain('flex-row');
+    }
+  });
+
   it('показывает блок на каждую часть: заголовок, объяснение, цифры', () => {
     render(<Build />);
     const fpga = screen.getByRole('article', { name: 'ПЛИС' });
@@ -24,7 +35,7 @@ describe('<Build />', () => {
 
   it.each(['ru', 'en'])('оставляет роли и транспорт видимыми, без отчёта о готовности (%s)', (lang) => {
     const { container } = render(<Build lang={lang} />);
-    for (const id of ['mcu', 'radio', 'fw', 'host', 'sd', 'ports', 'case']) {
+    for (const id of ['mcu', 'radio', 'fw', 'host', 'sd', 'ports', 'case', 'io']) {
       const article = container.querySelector(`#part-${id}`);
       const essential = article.querySelectorAll(id === 'fw' ? 'p' : 'p, dd');
       for (const text of essential) {

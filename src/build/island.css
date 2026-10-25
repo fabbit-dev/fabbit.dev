@@ -40,6 +40,7 @@
 .build__head { display: grid; gap: var(--s4); margin-bottom: var(--s5); }
 .build__head .h2, .build__head .label { margin-bottom: 0; }
 .build__head .label { margin-bottom: var(--s5); }
+.build__status { margin: 0 0 var(--s5); max-width: 85ch; }
 @media (min-width: 861px) { .build__head { grid-template-columns: 1fr 1fr; align-items: end; } }
 @media (max-width: 860px) { .build__head .label { margin-bottom: var(--s4); } }   /* ритм телефона: метка → 16 → заголовок */
 

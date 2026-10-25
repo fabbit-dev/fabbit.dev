@@ -1,6 +1,7 @@
 // Из чего сделан Fabbit. Одна запись — один блок в главе «Начинка»:
 // что это за деталь и зачем она в приборе одной фразой и цифры.
-// Цифры взяты из компоновки корпуса (бывшая таблица «Характеристики»).
+// Архитектура: fabbit/README.md, статус платы: hardware/mainboard/VERIFY.md.
+// Геометрия и разъёмы обновляются отдельным шагом вместе с 3D-моделью.
 // Тексты двуязычные: { ru, en }, язык выбирает pick() из src/i18n.js.
 
 export const PARTS = [
@@ -19,10 +20,20 @@ export const PARTS = [
     title: { ru: 'Микроконтроллер', en: 'Microcontroller' },
     icon: 'flash',
     what: {
-      ru: 'Маленький компьютер на плате: включается первым, читает карту памяти и загружает схему в ПЛИС.',
-      en: 'A small computer on the board: it boots first, reads the memory card and loads the circuit into the FPGA.',
+      ru: 'CH32H417 ведёт меню, загрузку ПЛИС, питание и заряд, лабораторный БП и мультиметр.',
+      en: 'CH32H417 handles the menu, FPGA loading, power and charging, bench supply and multimeter.',
     },
-    specs: [[{ ru: 'Микроконтроллер', en: 'Microcontroller' }, { ru: 'ESP32-C3, Wi-Fi и Bluetooth LE', en: 'ESP32-C3, Wi-Fi and Bluetooth LE' }]],
+    specs: [[{ ru: 'Микроконтроллер', en: 'Microcontroller' }, 'CH32H417']],
+  },
+  {
+    id: 'radio',
+    title: { ru: 'Радио', en: 'Wireless' },
+    icon: 'flash',
+    what: {
+      ru: 'ESP32-C5 — отдельный радиосопроцессор.',
+      en: 'ESP32-C5 is a separate wireless coprocessor.',
+    },
+    specs: [[{ ru: 'В целевой конфигурации', en: 'Target configuration' }, { ru: 'Wi-Fi 6 на 2,4 и 5 ГГц, BLE 5, 802.15.4', en: 'Dual-band 2.4/5 GHz Wi-Fi 6, BLE 5 and 802.15.4' }]],
   },
   {
     id: 'ports',
@@ -46,8 +57,8 @@ export const PARTS = [
     tag: [{ ru: 'Задачи', en: 'Tasks' }, { ru: 'меню, профили, связь с ПК', en: 'menu, profiles, PC link' }],   // ключевая строка на телефоне, где нет характеристик
     icon: 'terminal',
     what: {
-      ru: 'Программа микроконтроллера: меню, смена профилей, кнопки и связь с ПК. Отдельной ОС нет.',
-      en: 'The microcontroller program: menu, profile switching, buttons and the PC link. There is no separate OS.',
+      ru: 'Прошивка супервизора управляет меню, сменой профилей, питанием и измерениями БП и мультиметра.',
+      en: 'The supervisor firmware manages the menu, profile switching, power, and bench supply and multimeter measurements.',
     },
     specs: [],
   },
@@ -66,10 +77,14 @@ export const PARTS = [
     title: { ru: 'Компьютер', en: 'Computer' },
     icon: 'usb',
     what: {
-      ru: 'ПК по USB-C нужен, чтобы разобрать запись в sigrok на большом экране. Без него прибор работает сам.',
-      en: 'Connect a PC over USB-C to inspect a capture in sigrok on a big screen. The device runs without it.',
+      ru: 'Планируем передавать записи ЛА и trace через CH32H417 по USB 3.0.',
+      en: 'We plan to stream logic analyzer and trace captures through CH32H417 over USB 3.0.',
     },
-    specs: [[{ ru: 'Связь', en: 'Link' }, 'USB-C'], [{ ru: 'Софт', en: 'Software' }, { ru: 'sigrok, утилиты из host/', en: 'sigrok, tools from host/' }]],
+    specs: [[{ ru: 'Связь с ПЛИС', en: 'FPGA link' }, { ru: 'UHSIF, 16 бит', en: '16-bit UHSIF' }]],
+    note: {
+      ru: '5 Гбит/с — скорость линии USB. Полезный поток в целевом приборе ещё не измерен.',
+      en: '5 Gbit/s is the USB line rate. Application throughput on the target device has not been measured.',
+    },
   },
   {
     id: 'io',
@@ -102,6 +117,6 @@ export const PARTS = [
 // Неразрывные пробелы для вывода: число не отрывается от единицы и знака ×,
 // в русском ещё и короткий предлог — от следующего слова. Данные выше остаются обычным текстом.
 export const nbsp = (t, lang = 'ru') => {
-  const s = t.replace(/ (×|мм(?![а-яё])|mm\b)/g, ' $1').replace(/× /g, '× ');   // \b не работает после кириллицы
+  const s = t.replace(/ (×|мм(?![а-яё])|mm\b|ГГц|GHz\b|Гбит\/с|Gbit\/s\b|бит(?![а-яё]))/g, ' $1').replace(/× /g, '× ');   // \b не работает после кириллицы
   return lang === 'ru' ? s.replace(/(^|[\s(])(в|с|к|и|а|о|у|по|на|до|из|за|от|для|без|под)\s/gi, '$1$2 ') : s;
 };

@@ -53,6 +53,15 @@ describe('две версии сайта', () => {
     expect(CYR.test(en.title + en.querySelector('meta[name="description"]').content)).toBe(false);
   });
 
+  it('на первом экране обозначает разработку, в выносках нет старого MCU', () => {
+    expect(ru.querySelector('.hero__lead').textContent).toMatch(/^Разрабатываем/);
+    expect(en.querySelector('.hero__lead').textContent).toMatch(/^We’re developing/);
+    expect(JSON.stringify(CALLOUTS)).not.toContain('ESP32-C3');
+    const pcb = CALLOUTS.find((c) => c.groups.includes('PCB'));
+    expect(pick(pcb.sub, 'ru')).toContain('схемы пока нет');
+    expect(pick(pcb.sub, 'en')).toContain('no schematic yet');
+  });
+
   it('автоопределение языка стоит только в корне', () => {
     expect(read('index.html')).toContain("location.replace('/en/'");
     expect(read('en/index.html')).not.toContain('location.replace');
@@ -117,6 +126,7 @@ describe('двуязычные данные', () => {
     both(p.title, p.id); both(p.what, p.id);
     p.specs.flat().forEach((v) => both(v, p.id));
     (p.tag ?? []).forEach((v) => both(v, p.id));
+    if (p.note) both(p.note, p.id);
   }));
   it('выноски на модели', () => CALLOUTS.forEach((c) => { both(c.title, c.groups[0]); both(c.sub, c.groups[0]); }));
   it('надписи экрана прибора', () => {

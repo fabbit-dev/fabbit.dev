@@ -11,6 +11,7 @@ import './build/island.css';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { PROFILES } from './profiles.js';
+import { nbsp } from './build/parts.js';
 import { LANG, LANG_KEY, pick } from './i18n.js';
 import { mountBunny } from './bunny.js';
 import { mountHighFive } from './highfive.js';
@@ -55,6 +56,8 @@ function layoutStage() {
   const cards = $$('.sticky .wrap').map((w) => w.offsetHeight);
   document.documentElement.classList.remove('is-measuring');
   stageH = stageHeight({ vh: innerHeight, cards: [hero, ...cards] });
+  // Ограничения функций длиннее двух строк: оставляем тексту его фактическую высоту.
+  stageH = Math.min(stageH, Math.max(nav.getBoundingClientRect().bottom, innerHeight - Math.max(...cards)));
   root.setProperty('--stage-h', `${stageH}px`);
   // высота текста каждой главы: текст прижат к низу экрана, всё выше него — место прибора (band в init3D)
   $$('.sticky .wrap').forEach((w, i) => { nat[w.closest('section').id] = cards[i]; });
@@ -188,14 +191,25 @@ const plist = $('#plist');
 plist.innerHTML = PROFILES.map((p, i) => `
   <li data-i="${i}">
     <button type="button">
-      <img class="pixel" src="/brand/icons/${p.id}.svg" width="16" height="16" alt="">
+      <img class="pixel" src="/brand/icons/${p.icon}.svg" width="16" height="16" alt="">
       <span class="t">${pick(p.name)}</span>
       <span class="n" translate="no">${p.id}</span>
-      <span class="d">${pick(p.desc)}</span>
+      <span class="d">${nbsp(pick(p.desc), LANG)}</span>
     </button>
   </li>`).join('');
 const pItems = $$('li', plist);
 const pcur = $('#pcur');
+$('#ptotal').textContent = String(PROFILES.length).padStart(2, '0');
+$('.pmeta__bar').replaceChildren(...PROFILES.map(() => document.createElement('i')));
+// Длинные ограничения ЛА/БП не обрезаем и не меняем высоту мобильной карточки при выборе.
+const measureProfileDescriptions = () => {
+  plist.classList.add('is-measuring-descriptions');
+  root.setProperty('--profile-desc-h', `${Math.ceil(Math.max(...$$('.d', plist).map((d) => d.scrollHeight)))}px`);
+  plist.classList.remove('is-measuring-descriptions');
+};
+measureProfileDescriptions();
+addEventListener('resize', measureProfileDescriptions);
+document.fonts.ready.then(() => { measureProfileDescriptions(); layoutStage(); ScrollTrigger.refresh(); });
 let activeProfile = -1;
 let onProfile = () => {};                       // экран прибора подписывается, когда готов 3D
 function setActiveProfile(i) {

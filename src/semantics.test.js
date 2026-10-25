@@ -54,4 +54,15 @@ describe.each([
     expect(doc.querySelector('meta[property="og:url"]').content).toMatch(/^https:\/\//);
     expect(doc.querySelector('meta[property="og:type"]').content).toBe('website');
   });
+
+  it('разделяет целевые функции, старые идеи и демонстрации', () => {
+    const section = doc.querySelector('#profiles');
+    expect(section.textContent).not.toMatch(/Девять|Nine|Все каналы|All channels|\/ 09/);
+    expect(section.querySelector('.lead').textContent).toContain('CH32H417');
+    expect(section.querySelector('.profiles__demo').textContent).toMatch(/Doom.*NES/);
+    expect(doc.querySelector('.profile-ideas').textContent).toMatch(/нейроускоритель|neural accelerator/);
+    expect(doc.querySelector('.profile-ideas').textContent).toMatch(/вне текущего целевого набора|outside the current target set/);
+    expect(section.querySelector('#ptotal')).not.toBeNull();
+    expect(section.querySelector('.pmeta__bar').children).toHaveLength(0);
+  });
 });

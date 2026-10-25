@@ -31,7 +31,7 @@
       <img class="pixel" src="/brand/fabbit-logo-ink.svg" width="92" height="31" alt="" translate="no">
     </a>
     <nav class="nav__links" aria-label="Sections">
-      <a href="#profiles">Profiles</a>
+      <a href="#profiles">Functions</a>
       <a href="#device">Teardown</a>
       <a href="#blueprint">Blueprint</a>
       <a href="#how">Internals</a>
@@ -49,7 +49,7 @@
   <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Sections" hidden>
     <nav aria-label="Sections">
       <ol class="menu__list">
-        <li><a href="#profiles"><span class="menu__n">01</span>Profiles</a></li>
+        <li><a href="#profiles"><span class="menu__n">01</span>Functions</a></li>
         <li><a href="#device"><span class="menu__n">02</span>Teardown</a></li>
         <li><a href="#blueprint"><span class="menu__n">03</span>Blueprint</a></li>
         <li><a href="#how"><span class="menu__n">04</span>Internals</a></li>
@@ -102,20 +102,22 @@
         <div class="sticky">
           <div class="wrap col profiles__inner">
             <div class="profiles__head">
-              <p class="label reveal"><span class="label__n">01</span>Profiles</p>
-              <h2 class="h2 reveal" id="profiles-title">Nine instruments<br>on&nbsp;one board.</h2>
-              <p class="lead reveal">All channels run at once, and the trigger fires within one clock cycle.</p>
+              <p class="label reveal"><span class="label__n">01</span>Functions</p>
+              <h2 class="h2 reveal" id="profiles-title">Instruments<br>on&nbsp;one board.</h2>
+              <p class="lead reveal">We’re developing the functions below. CH32H417 handles the bench supply and&nbsp;multimeter.</p>
             </div>
-            <ol class="plist reveal" id="plist" aria-label="Profiles"></ol>
+            <ol class="plist reveal" id="plist" aria-label="Functions"></ol>
             <div class="pmeta tech reveal">
-              <button class="pmeta__step" type="button" data-step="-1" aria-label="Previous profile"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
-              <p class="pmeta__count"><b id="pcur">01</b> / 09</p>
-              <span class="pmeta__bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <button class="pmeta__step" type="button" data-step="1" aria-label="Next profile"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+              <button class="pmeta__step" type="button" data-step="-1" aria-label="Previous function"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+              <p class="pmeta__count"><b id="pcur">01</b> / <span id="ptotal"></span></p>
+              <span class="pmeta__bar" aria-hidden="true"></span>
+              <button class="pmeta__step" type="button" data-step="1" aria-label="Next function"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
             </div>
+            <p class="profiles__demo reveal">Interface demo. On-screen values are illustrative. Doom illustrates the retro concept; NES is&nbsp;confirmed on&nbsp;the bench setup.</p>
           </div>
         </div>
       </section>
+      <aside class="profile-ideas"><div class="wrap"><p>Early ideas: neural accelerator, cable tester, bus analyzer, programmer and&nbsp;terminal. These are outside the current target set.</p></div></aside>
 
       <!-- 3. Exploded view (sticky) -->
       <section class="scene device" id="device" data-theme="light" aria-labelledby="device-title">

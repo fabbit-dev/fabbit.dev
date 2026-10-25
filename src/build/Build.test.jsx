@@ -24,7 +24,7 @@ describe('<Build />', () => {
 
   it.each(['ru', 'en'])('оставляет роли, транспорт и статус видимыми на телефоне (%s)', (lang) => {
     const { container } = render(<Build lang={lang} />);
-    for (const id of ['mcu', 'radio', 'fw', 'host']) {
+    for (const id of ['mcu', 'radio', 'fw', 'host', 'sd']) {
       const article = container.querySelector(`#part-${id}`);
       const essential = article.querySelectorAll(id === 'fw' ? 'p' : 'p, dd');
       for (const text of essential) {
@@ -43,6 +43,20 @@ describe('<Build />', () => {
     expect(lead.textContent).toMatch(/CH32H417.*ESP32-C5/);
     expect(lead.textContent).toMatch(lang === 'ru' ? /целевой архитектуре/ : /target architecture/);
     expect(container.querySelector('#part-host').textContent).toMatch(/5[\s\u00a0](?:Гбит\/с|Gbit\/s)/);
+  });
+
+  it.each(['ru', 'en'])('объясняет golden, носители, восстановление и ограничения возврата (%s)', (lang) => {
+    const { container } = render(<Build lang={lang} />);
+    const profile = container.querySelector('#part-sd');
+    expect(profile.textContent).toMatch(lang === 'ru' ? /флеш-слота или с\s+microSD/ : /flash slot or microSD/);
+    expect(profile.textContent).not.toMatch(/9 проф|9 profiles/);
+    const architecture = container.querySelector('.build__architecture');
+    expect(architecture.textContent).toMatch(/golden|Golden/);
+    expect(architecture.textContent).toMatch(/i9\+.*JTAG.*microSD.*H417/);
+    expect(architecture.textContent).toMatch(/SDRAM.*UART/);
+    expect(architecture.textContent).toMatch(/Vivado.*openXC7/);
+    expect(architecture.textContent).toMatch(lang === 'ru' ? /перезапуска питания/ : /cycling module power/);
+    expect(architecture.textContent).toMatch(lang === 'ru' ? /Меню поверх игры ещё в\s+плане/ : /in-game menu overlay remains planned/);
   });
 
   it('без ленты из четырёх шагов: только карточки частей', () => {

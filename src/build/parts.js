@@ -67,10 +67,10 @@ export const PARTS = [
     title: { ru: 'Профиль', en: 'Profile' },
     icon: 'sd',
     what: {
-      ru: 'Файл на карте памяти со схемой для ПЛИС и настройками. Чтобы добавить прибор, вы копируете на карту новый файл.',
-      en: 'A file on the memory card with the FPGA circuit and settings. To add an instrument, you copy a new file to the card.',
+      ru: 'Профиль задаёт логику прибора в ПЛИС. В целевой архитектуре его выбирают из флеш-слота или с microSD.',
+      en: 'A profile defines instrument logic in the FPGA. The target architecture supports profiles from a flash slot or microSD.',
     },
-    specs: [[{ ru: 'В наборе', en: 'Included' }, { ru: '9 профилей', en: '9 profiles' }], [{ ru: 'Носитель', en: 'Storage' }, 'microSD']],
+    specs: [[{ ru: 'Носитель', en: 'Storage' }, { ru: 'флеш-слот или microSD', en: 'flash slot or microSD' }]],
   },
   {
     id: 'host',
@@ -117,6 +117,6 @@ export const PARTS = [
 // Неразрывные пробелы для вывода: число не отрывается от единицы и знака ×,
 // в русском ещё и короткий предлог — от следующего слова. Данные выше остаются обычным текстом.
 export const nbsp = (t, lang = 'ru') => {
-  const s = t.replace(/ (×|мм(?![а-яё])|mm\b|ГГц|GHz\b|Гбит\/с|Gbit\/s\b|бит(?![а-яё]))/g, ' $1').replace(/× /g, '× ');   // \b не работает после кириллицы
+  const s = t.replace(/ (×|мм(?![а-яё])|mm\b|ГГц|GHz\b|Гбит\/с|Gbit\/s\b|бит(?![а-яё])|MS\/s\b|Впп|Вт|В(?![а-яё])|Ом|мкА|А(?![а-яё])|Vpp\b|V\b|W\b|Ω|µA\b|A\b)/g, ' $1').replace(/× /g, '× ');   // \b не работает после кириллицы
   return lang === 'ru' ? s.replace(/(^|[\s(])(в|с|к|и|а|о|у|по|на|до|из|за|от|для|без|под)\s/gi, '$1$2 ') : s;
 };

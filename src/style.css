@@ -307,7 +307,15 @@ section[id] { scroll-margin-top: calc(var(--nav-h) + var(--s3)); }
 }
 .plist [aria-current="true"] button { color: var(--fb-ink); }
 .plist [aria-current="true"] img { opacity: 1; }
-.plist [aria-current="true"] .d { max-height: 3em; opacity: 1; padding-top: var(--s1); }
+.plist [aria-current="true"] .d { max-height: calc(var(--profile-desc-h, 12em) + var(--s1)); opacity: 1; padding-top: var(--s1); }
+.profiles__demo { max-width: var(--col); margin: var(--s3) 0 0; color: var(--fb-text-3); font-size: var(--t-small); line-height: var(--lh-body); }
+.no-gl .profiles { height: auto; }
+.no-gl .profiles .sticky { position: static; height: auto; overflow: visible; }
+.no-gl .profiles__inner { padding-bottom: var(--s6); }
+.profile-ideas { position: relative; z-index: 2; background: var(--fb-white); padding: var(--s5) 0; }
+.profile-ideas p { margin: 0; max-width: var(--col); color: var(--fb-text-2); font-size: var(--t-small); line-height: var(--lh-body); }
+.plist.is-measuring-descriptions li { display: block !important; }
+.plist.is-measuring-descriptions .d { height: auto !important; max-height: none !important; padding-top: 0 !important; }
 .pmeta {
   display: flex; align-items: center; gap: var(--s2); width: var(--col);
   margin: var(--s4) 0 0; font-size: var(--t-mono-s); color: var(--fb-text-3);
@@ -460,7 +468,9 @@ textarea.field__input { resize: vertical; }
 @media (max-height: 820px) and (min-width: 861px) {
   .hero__brand { --cell: 3px; margin-bottom: var(--s5); }
   .hero__logo { width: 174px; height: 57px; }  /* 3× */
-  .profiles .lead { display: none; }
+  .profiles .lead { font-size: var(--t-small); }
+  .plist li:not([aria-current="true"]) { display: none; }
+  .plist [aria-current="true"] .d { height: calc(var(--profile-desc-h, 12em) + var(--s1)); max-height: none; }
   .plist { margin-top: var(--s4); }
   .plist button { min-height: 32px; padding: var(--s1) 0; }
 }
@@ -542,7 +552,7 @@ textarea.field__input { resize: vertical; }
   .plist { margin-top: var(--s2); }
   .plist li:not([aria-current="true"]) { display: none; }
   .plist .d { transition: none; }
-  .plist [aria-current="true"] .d { height: calc(2 * var(--lh-body) * 1em + var(--s1)); max-height: none; }   /* + отступ сверху: хвосты букв не режутся */
+  .plist [aria-current="true"] .d { height: calc(var(--profile-desc-h, 12em) + var(--s1)); max-height: none; }
   .pmeta { margin-top: var(--s2); }
 
   .open__grid { grid-template-columns: 1fr; gap: var(--s7); }
@@ -595,11 +605,11 @@ textarea.field__input { resize: vertical; }
   .label, .h2 { margin-bottom: var(--s3); }
   .sticky .lead { font-size: var(--t-body); line-height: var(--lh-body); }
   /* профили: как на телефоне — одна активная строка и шкала, плюс стрелки */
-  .profiles .lead { display: none; }
+  .profiles .lead { font-size: var(--t-small); }
   .plist { margin-top: var(--s3); }
   .plist li:not([aria-current="true"]) { display: none; }
   .plist .d { transition: none; }
-  .plist [aria-current="true"] .d { height: calc(2 * var(--lh-body) * 1em + var(--s1)); max-height: none; }
+  .plist [aria-current="true"] .d { height: calc(var(--profile-desc-h, 12em) + var(--s1)); max-height: none; }
   .pmeta { margin-top: var(--s2); }
   .pmeta__bar { display: flex; gap: 3px; flex: 1; max-width: 40%; margin-right: var(--s2); }
   .pmeta__bar i { flex: 1; height: 3px; background: var(--fb-line); transition: background-color var(--dur); }

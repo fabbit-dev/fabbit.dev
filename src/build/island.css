@@ -41,6 +41,8 @@
 .build__head .h2, .build__head .label { margin-bottom: 0; }
 .build__head .label { margin-bottom: var(--s5); }
 .build__status { margin: 0 0 var(--s5); max-width: 85ch; }
+.build__architecture { display: grid; gap: var(--s4); margin-top: var(--s5); max-width: 75ch; color: var(--fb-text-2); font-size: var(--t-body); line-height: var(--lh-body); }
+.build__architecture p { margin: 0; }
 @media (min-width: 861px) { .build__head { grid-template-columns: 1fr 1fr; align-items: end; } }
 @media (max-width: 860px) { .build__head .label { margin-bottom: var(--s4); } }   /* ритм телефона: метка → 16 → заголовок */
 

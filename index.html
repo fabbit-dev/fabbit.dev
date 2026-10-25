@@ -34,7 +34,7 @@
       <img class="pixel" src="/brand/fabbit-logo-ink.svg" width="92" height="31" alt="" translate="no">
     </a>
     <nav class="nav__links" aria-label="Разделы">
-      <a href="#profiles">Профили</a>
+      <a href="#profiles">Функции</a>
       <a href="#device">Разборка</a>
       <a href="#blueprint">Чертёж</a>
       <a href="#how">Начинка</a>
@@ -52,7 +52,7 @@
   <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Разделы" hidden>
     <nav aria-label="Разделы">
       <ol class="menu__list">
-        <li><a href="#profiles"><span class="menu__n">01</span>Профили</a></li>
+        <li><a href="#profiles"><span class="menu__n">01</span>Функции</a></li>
         <li><a href="#device"><span class="menu__n">02</span>Разборка</a></li>
         <li><a href="#blueprint"><span class="menu__n">03</span>Чертёж</a></li>
         <li><a href="#how"><span class="menu__n">04</span>Начинка</a></li>
@@ -105,20 +105,22 @@
         <div class="sticky">
           <div class="wrap col profiles__inner">
             <div class="profiles__head">
-              <p class="label reveal"><span class="label__n">01</span>Профили</p>
-              <h2 class="h2 reveal" id="profiles-title">Девять приборов<br>на&nbsp;одной плате.</h2>
-              <p class="lead reveal">Все каналы работают одновременно, триггер срабатывает с&nbsp;точностью до&nbsp;такта.</p>
+              <p class="label reveal"><span class="label__n">01</span>Функции</p>
+              <h2 class="h2 reveal" id="profiles-title">Приборы<br>на&nbsp;одной плате.</h2>
+              <p class="lead reveal">Разрабатываем функции ниже. Лабораторный БП и&nbsp;мультиметр ведёт CH32H417.</p>
             </div>
-            <ol class="plist reveal" id="plist" aria-label="Профили"></ol>
+            <ol class="plist reveal" id="plist" aria-label="Функции"></ol>
             <div class="pmeta tech reveal">
-              <button class="pmeta__step" type="button" data-step="-1" aria-label="Предыдущий профиль"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
-              <p class="pmeta__count"><b id="pcur">01</b> / 09</p>
-              <span class="pmeta__bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <button class="pmeta__step" type="button" data-step="1" aria-label="Следующий профиль"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+              <button class="pmeta__step" type="button" data-step="-1" aria-label="Предыдущая функция"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+              <p class="pmeta__count"><b id="pcur">01</b> / <span id="ptotal"></span></p>
+              <span class="pmeta__bar" aria-hidden="true"></span>
+              <button class="pmeta__step" type="button" data-step="1" aria-label="Следующая функция"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
             </div>
+            <p class="profiles__demo reveal">Демонстрация интерфейса. Значения на&nbsp;экране иллюстративные. Doom показывает идею ретро-режима; на&nbsp;стенде подтверждён NES.</p>
           </div>
         </div>
       </section>
+      <aside class="profile-ideas"><div class="wrap"><p>Ранние идеи: нейроускоритель, рефлектометр, анализатор шин, программатор и&nbsp;терминал. Они вне текущего целевого набора.</p></div></aside>
 
       <!-- 3. Exploded view (sticky) -->
       <section class="scene device" id="device" data-theme="light" aria-labelledby="device-title">

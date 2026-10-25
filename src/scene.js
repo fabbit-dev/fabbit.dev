@@ -6,16 +6,18 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 // Модель в миллиметрах, оси glTF: x вправо, y вверх (0…150), z к зрителю (перед корпуса z = 0).
 const DEVICE_H = 150;
-const CENTER = new THREE.Vector3(0, 75, -11);
+const CENTER = new THREE.Vector3(0, 75, -11.25);
 
-// Узлы модели называются «Группа__материал» (scripts/export-model.py).
+// Узлы модели называются «Группа__материал» (локальная цепочка .dev/model/).
 // Смещения групп при разлёте, мм: лицо вперёд, начинка слоями назад к крышке.
 const EXPLODE = {
   Caps: [0, 0, 34], Panel: [0, 0, 26], Shell_Front: [0, 0, 16], Screen: [0, 0, 7],
-  I9: [0, 0, -12], Heat: [0, 0, -22], Mezz: [0, 0, -12], SMA: [0, 6, -12],
+  I9: [0, 0, -12], FPGA: [0, 0, -12], Heat: [0, 0, -22], Analog: [0, 0, -16], SMA: [0, 6, -16],
   Battery: [0, 0, -26], Shell_Back: [0, 0, -42], Lid: [0, 0, -58],
   Wheel: [-18, 0, 0], Power: [-14, 0, 0], Headers: [0, 16, 0], Ports: [0, -14, 0],
-  ESP: [22, 0, 0],   // выезжает за край платы: иначе с обеих сторон его закрывают плата и лицевая половина
+  MCU: [22, 0, 8], Radio: [22, 0, -4], MIPI: [0, 16, 0],
+  Socket: [0, 0, 0], B2B: [0, 0, 0], Standoffs: [0, 0, 0],
+  Speaker: [0, 0, 6], Switches: [0, 0, 6], Peripherals: [0, 0, 0], PCB: [0, 0, 0],
 };
 // Снятие спинки (state.open): с тыльного ракурса спинка и крышка закрывают начинку, поэтому уходят вверх из кадра.
 // Теплосъём ПЛИС приклеен к крышке и уходит вместе с ней.
@@ -24,29 +26,31 @@ const OPEN = { Shell_Back: [0, 320, -30], Lid: [0, 360, -40], Heat: [0, 360, -40
 // Выноски: группы, подпись ({ ru, en } или одна строка на обоих языках), в какую сторону «смотрит» деталь (для скрытия с обратной стороны),
 // at — своя опорная точка в координатах модели вместо центра деталей.
 export const CALLOUTS = [
-  { groups: ['Panel', 'Screen'], title: { ru: 'Экран', en: 'Screen' }, sub: '3,5″ · 640 × 480', dir: [0, 0, 1] },
+  { groups: ['Panel', 'Screen'], title: { ru: 'Экран', en: 'Screen' }, sub: { ru: '3,5″ · 640 × 480', en: '3.5″ · 640 × 480' }, dir: [0, 0, 1] },
   { groups: ['Caps'], title: { ru: 'Управление', en: 'Controls' }, sub: { ru: 'крестовина · F1–F4 · Fn, Меню, Назад', en: 'D-pad · F1–F4 · Fn, Menu, Back' }, dir: [0, 0, 1] },
   { groups: ['Wheel'], title: { ru: 'Колесо', en: 'Wheel' }, sub: { ru: 'масштаб и развёртка', en: 'zoom and timebase' }, dir: [-1, 0, 0.3] },
-  { groups: ['I9'], title: { ru: 'ПЛИС Artix-7', en: 'Artix-7 FPGA' }, sub: { ru: 'модуль Colorlight i9+', en: 'Colorlight i9+ module' }, dir: [0, 0, -1] },
-  { groups: ['Mezz'], title: { ru: 'Мезонин АЦП', en: 'ADC mezzanine' }, sub: { ru: 'два АЦП: быстрый и точный', en: 'two ADCs: fast and precise' }, dir: [0, 0, -1] },
-  { groups: ['SMA'], title: '2 × SMA', sub: { ru: 'входы для щупов осциллографа', en: 'scope probe inputs' }, dir: [0, 0.4, -1] },
-  { groups: ['PCB'], title: { ru: 'Главная плата', en: 'Mainboard' }, sub: { ru: 'в разводке', en: 'layout in progress' }, dir: [0, 0, -1], at: [36, 122, -7.5] },
+  { groups: ['FPGA'], title: { ru: 'ПЛИС Artix-7', en: 'Artix-7 FPGA' }, sub: { ru: 'модуль Colorlight i9+', en: 'Colorlight i9+ module' }, dir: [0, 0, -1], at: [0, 69, -17.1] },
+  { groups: ['Analog'], title: { ru: 'Аналоговый модуль', en: 'Analog module' }, sub: { ru: 'осциллограф · генератор · мультиметр', en: 'oscilloscope · signal generator · multimeter' }, dir: [0, 0, -1], at: [-12, 107, -18] },
+  { groups: ['SMA'], title: '3 × SMA', sub: 'CH1 / CH2 / GEN', dir: [0, 0.4, -1], at: [-7, 130, -16.54] },
+  { groups: ['PCB'], title: { ru: 'Главная плата', en: 'Mainboard' }, sub: '', dir: [0, 0, -1], at: [36, 122, -7.5] },
   { groups: ['Battery'], title: { ru: 'Аккумулятор', en: 'Battery' }, sub: 'Li-Pol 1S', dir: [0, 0, -1] },
   { groups: ['Ports'], title: 'HDMI · USB-C · microSD', sub: { ru: 'нижний торец', en: 'bottom edge' }, dir: [0, -0.3, -1] },
-  { groups: ['ESP'], title: 'ESP32-C3', sub: { ru: 'меню, карта памяти, загрузка ПЛИС', en: 'menu, memory card, FPGA loading' }, dir: [1, 0, -0.6] },
+  { groups: ['MCU'], title: 'CH32H417', sub: { ru: 'управление прибором', en: 'device control' }, dir: [1, 0, -0.6], at: [27.5, 27, -5.15] },
+  { groups: ['Radio'], title: 'ESP32-C5', sub: { ru: 'радио', en: 'wireless' }, dir: [0.5, 0, -1], at: [31.55, 120.5, -9.9] },
+  { groups: ['MIPI'], title: 'MIPI-20', sub: 'SWD · JTAG · trace', dir: [0, 0.6, -0.5], at: [33.68, 150, -9.2] },
   // чертёж: органы управления на собранном приборе; колесо и выключатель на левом боку, в этом ракурсе он виден краем
   { bp: true, groups: ['Caps'], title: { ru: 'Крестовина', en: 'D-pad' }, sub: { ru: 'навигация', en: 'navigation' }, dir: [0, 0, 1], at: [-25.5, 50, 2.2] },
   { bp: true, groups: ['Caps'], title: 'F1 · F2 · F3 · F4', sub: { ru: 'действия профиля', en: 'profile actions' }, dir: [0, 0, 1], at: [23.5, 50, 2.2] },
   { bp: true, groups: ['Caps'], title: { ru: 'Fn · Меню · Назад', en: 'Fn · Menu · Back' }, sub: '', dir: [0, 0, 1], at: [0, 16, 0.8] },
-  { bp: true, groups: ['Wheel'], title: { ru: 'Колесо', en: 'Wheel' }, sub: { ru: 'масштаб и развёртка', en: 'zoom and timebase' }, dir: [0, 0, 1], at: [-47.3, 116, -6] },
-  { bp: true, groups: ['Power'], title: { ru: 'Выключатель', en: 'Power switch' }, sub: { ru: 'питание', en: 'power' }, dir: [0, 0, 1], at: [-45, 99.6, -6] },
+  { bp: true, groups: ['Wheel'], title: { ru: 'Колесо', en: 'Wheel' }, sub: { ru: 'масштаб и развёртка', en: 'zoom and timebase' }, dir: [0, 0, 1], at: [-45.55, 116, -10.5] },
+  { bp: true, groups: ['Power'], title: { ru: 'Кнопка питания', en: 'Power button' }, sub: '', dir: [0, 0, 1], at: [-44.7, 90.5, -9.2] },
 ];
 
 // Размерные линии чертежа, мм в координатах модели.
 export const DIMENSIONS = [
-  { a: [-44, -12, 0], b: [44, -12, 0], label: '88' },
-  { a: [54, 0, 0], b: [54, 150, 0], label: '150' },
-  { a: [44, -12, 0], b: [44, -12, -22], label: '22' },   // продолжает линию ширины от правого угла
+  { a: [-45, -12, 0], b: [45, -12, 0], label: '90' },
+  { a: [55, 0, 0], b: [55, 150, 0], label: '150' },
+  { a: [45, -12, 0], b: [45, -12, -22.5], label: { ru: '22,5', en: '22.5' } },
 ];
 
 // mobile: без MSAA и с потолком плотности 1.5 — на телефоне экран мелкий, а заливка пикселей дорогая.
@@ -85,7 +89,7 @@ export async function createScene(canvas, screen, { mobile = false, bob = true, 
 
   const [gltf, ao] = await Promise.all([
     // GLB сжат meshopt и квантован (scripts/optimize-model.mjs): у узлов свой масштаб
-    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('/models/fabbit_v1.glb'),
+    new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('/models/fabbit.glb'),
     // запечённое в Blender затенение (Cycles AO) по общей развёртке всех деталей, scripts/bake-model.py
     new THREE.TextureLoader().loadAsync('/models/fabbit_ao.webp'),
   ]);
@@ -157,7 +161,7 @@ export async function createScene(canvas, screen, { mobile = false, bob = true, 
   screenMesh.position.set(0, 116, 0.12);
   follow(parts.find((p) => p.group === 'Panel'), screenMesh);   // экран едет вместе с панелью
 
-  // Маркировка ПЛИС: лазерная гравировка на крышке FGG484 (23×23 мм, верх на z −14.95, смотрит к спинке)
+  // Маркировка ПЛИС на текущем корпусе FGG484: верх на z −17.1, смотрит к спинке.
   const mark = document.createElement('canvas');
   mark.width = mark.height = 512;
   const g = mark.getContext('2d');
@@ -173,8 +177,8 @@ export async function createScene(canvas, screen, { mobile = false, bob = true, 
   mats.mark = new THREE.MeshStandardMaterial({ map: markTex, alphaTest: 0.3, roughness: 0.6 });
   const markMesh = new THREE.Mesh(new THREE.PlaneGeometry(23, 23), mats.mark);
   markMesh.rotation.y = Math.PI;
-  markMesh.position.set(0, 70, -14.97);
-  follow(parts.find((p) => p.group === 'I9' && p.mesh.material === mats.chip), markMesh);
+  markMesh.position.set(0, 69, -17.12);
+  follow(parts.find((p) => p.group === 'FPGA' && p.mesh.material === mats.chip), markMesh);
 
   const solids = Object.values(mats);
   for (const m of solids) { m.polygonOffsetFactor = 1; m.polygonOffsetUnits = 1; }
@@ -289,7 +293,7 @@ export async function createScene(canvas, screen, { mobile = false, bob = true, 
       return { ...project(world), facing, title: pick(c.title, lang), sub: pick(c.sub, lang), group: c.groups[0], bp: !!c.bp };
     });
     const toWorld = (a) => model.localToWorld(new THREE.Vector3(...a));
-    const dims = DIMENSIONS.map((d) => ({ a: project(toWorld(d.a)), b: project(toWorld(d.b)), label: d.label }));
+    const dims = DIMENSIONS.map((d) => ({ a: project(toWorld(d.a)), b: project(toWorld(d.b)), label: pick(d.label, lang) }));
     return { center, box: [x0, x1], callouts: cs, dims };
   }
 

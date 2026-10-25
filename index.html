@@ -34,7 +34,7 @@
       <img class="pixel" src="/brand/fabbit-logo-ink.svg" width="92" height="31" alt="" translate="no">
     </a>
     <nav class="nav__links" aria-label="Разделы">
-      <a href="#profiles">Профили</a>
+      <a href="#profiles">Функции</a>
       <a href="#device">Разборка</a>
       <a href="#blueprint">Чертёж</a>
       <a href="#how">Начинка</a>
@@ -52,7 +52,7 @@
   <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Разделы" hidden>
     <nav aria-label="Разделы">
       <ol class="menu__list">
-        <li><a href="#profiles"><span class="menu__n">01</span>Профили</a></li>
+        <li><a href="#profiles"><span class="menu__n">01</span>Функции</a></li>
         <li><a href="#device"><span class="menu__n">02</span>Разборка</a></li>
         <li><a href="#blueprint"><span class="menu__n">03</span>Чертёж</a></li>
         <li><a href="#how"><span class="menu__n">04</span>Начинка</a></li>
@@ -86,7 +86,7 @@
             <button class="hero__bunny" type="button" aria-label="Заяц Fabbit: показать сценку"><svg id="bunny" aria-hidden="true"></svg></button>
           </div>
           <h1 class="hero__title" id="top-title"><span class="sr-only" translate="no">Fabbit. </span><span class="hero__claim reveal">Карманный мультитул для&nbsp;электронщика.</span></h1>
-          <p class="lead hero__lead reveal">Осциллограф, анализатор и&nbsp;<span class="nowrap">ретро-консоль</span> в&nbsp;одном&nbsp;корпусе. Сделано школьниками.</p>
+          <p class="lead hero__lead reveal">Осциллограф, логический анализатор и&nbsp;<span class="nowrap">ретро-консоль</span>. Проект в&nbsp;разработке.</p>
           <div class="actions reveal">
             <a class="btn btn--ink" href="https://github.com/fabbit-dev/fabbit" target="_blank" rel="noopener">Исходники на GitHub</a>
             <a class="btn" href="#support">Поддержать <span aria-hidden="true">↓</span></a>
@@ -105,17 +105,18 @@
         <div class="sticky">
           <div class="wrap col profiles__inner">
             <div class="profiles__head">
-              <p class="label reveal"><span class="label__n">01</span>Профили</p>
-              <h2 class="h2 reveal" id="profiles-title">Девять приборов<br>на&nbsp;одной плате.</h2>
-              <p class="lead reveal">Все каналы работают одновременно, триггер срабатывает с&nbsp;точностью до&nbsp;такта.</p>
+              <p class="label reveal"><span class="label__n">01</span>Функции</p>
+              <h2 class="h2 reveal" id="profiles-title">Приборы<br>на&nbsp;одной плате.</h2>
+              <p class="lead reveal">БП и&nbsp;мультиметр ведёт CH32H417. Логику профиля выполняет ПЛИС.</p>
             </div>
-            <ol class="plist reveal" id="plist" aria-label="Профили"></ol>
+            <ol class="plist reveal" id="plist" aria-label="Функции"></ol>
             <div class="pmeta tech reveal">
-              <button class="pmeta__step" type="button" data-step="-1" aria-label="Предыдущий профиль"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
-              <p class="pmeta__count"><b id="pcur">01</b> / 09</p>
-              <span class="pmeta__bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <button class="pmeta__step" type="button" data-step="1" aria-label="Следующий профиль"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+              <button class="pmeta__step" type="button" data-step="-1" aria-label="Предыдущая функция"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+              <p class="pmeta__count"><b id="pcur">01</b> / <span id="ptotal"></span></p>
+              <span class="pmeta__bar" aria-hidden="true"></span>
+              <button class="pmeta__step" type="button" data-step="1" aria-label="Следующая функция"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
             </div>
+            <p class="profiles__demo reveal">Демо интерфейса. Числа для&nbsp;примера.</p>
           </div>
         </div>
       </section>
@@ -126,7 +127,7 @@
           <div class="wrap col device__inner">
             <p class="label reveal"><span class="label__n">02</span>Разборка</p>
             <h2 class="h2 reveal" id="device-title">Разбираем<br>по&nbsp;слоям.</h2>
-            <p class="lead reveal">Спереди экран и&nbsp;кнопки. Под&nbsp;задней крышкой стоят ПЛИС, АЦП и&nbsp;аккумулятор.</p>
+            <p class="lead reveal">Спереди экран и&nbsp;кнопки. Под&nbsp;задней крышкой стоят ПЛИС, аналоговый модуль и&nbsp;аккумулятор.</p>
           </div>
         </div>
       </section>
@@ -136,8 +137,8 @@
         <div class="sticky">
           <div class="wrap col blueprint__inner">
             <p class="label reveal"><span class="label__n">03</span>Чертёж</p>
-            <h2 class="h2 h2--mono reveal" id="blueprint-title">88×150×22&nbsp;мм</h2>
-            <p class="lead reveal">Размером с&nbsp;первый Game Boy, только на&nbsp;сантиметр тоньше. Модель корпуса лежит в&nbsp;репозитории: скачайте <a href="https://github.com/fabbit-dev/fabbit/blob/main/hardware/case/fabbit_case.FCStd" target="_blank" rel="noopener"><code translate="no">fabbit_case.FCStd</code></a> и&nbsp;печатайте свой.</p>
+            <h2 class="h2 h2--mono reveal" id="blueprint-title">90×150×22,5&nbsp;мм</h2>
+            <p class="lead reveal">Над&nbsp;аналоговым модулем: 24&nbsp;мм. Корпус для&nbsp;SLA-печати. Модель FreeCAD: <a href="https://github.com/fabbit-dev/fabbit/blob/main/hardware/case/fabbit_case.FCStd" target="_blank" rel="noopener"><code translate="no">fabbit_case.FCStd</code></a>.</p>
           </div>
         </div>
       </section>
@@ -152,7 +153,7 @@
         <div>
           <p class="label reveal"><span class="label__n">05</span>Команда</p>
           <h2 class="h2 reveal" id="team-title">Собираем Fabbit <br>в&nbsp;10&nbsp;классе.</h2>
-          <p class="lead team__lead reveal">Схемы, логику для&nbsp;ПЛИС, прошивку и&nbsp;корпус делаем сами. Каждый шаг, неудачные тоже, записываем в&nbsp;дневник.</p>
+          <p class="lead team__lead reveal">Схемы, логику ПЛИС, прошивку и&nbsp;корпус делаем сами. В&nbsp;дневнике публикуем замеры и&nbsp;ошибки.</p>
         </div>
         <div class="crew">
           <article class="person reveal" aria-labelledby="p-roma">
@@ -183,8 +184,8 @@
       <div class="wrap open__grid">
         <div>
           <p class="label reveal"><span class="label__n">06</span>Код</p>
-          <h2 class="h2 reveal" id="open-title">Выкладываем всё<br>с&nbsp;первого коммита.</h2>
-          <p class="lead reveal">В&nbsp;репозитории схемы, код для&nbsp;ПЛИС и&nbsp;микроконтроллера и&nbsp;дневник с&nbsp;замерами и&nbsp;тупиками. Железо под&nbsp;<span class="nowrap">CERN-OHL-S-2.0</span>, код под&nbsp;MIT: можете менять его и&nbsp;выпускать свою версию.</p>
+          <h2 class="h2 reveal" id="open-title">Код, платы<br>и&nbsp;корпус открыты.</h2>
+          <p class="lead reveal">В&nbsp;репозитории код ПЛИС и&nbsp;прошивки, платы, корпус и&nbsp;дневник. Код: MIT. Железо: <span class="nowrap">CERN-OHL-S-2.0</span>.</p>
           <div class="actions reveal">
             <a class="btn btn--paper" href="https://github.com/fabbit-dev/fabbit/subscription" target="_blank" rel="noopener">Следить за&nbsp;разработкой</a>
             <a class="btn btn--line" href="https://github.com/fabbit-dev/fabbit/tree/main/journal" target="_blank" rel="noopener">Дневник</a>

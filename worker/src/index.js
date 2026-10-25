@@ -33,14 +33,38 @@ function text(v, max) {
   return s || null;
 }
 
+// Ограничение в байтах, в том числе для chunked-запроса без Content-Length.
+// null: слишком большое тело, чтение прекращено до разбора JSON/подписи.
+async function readBody(req) {
+  if (Number(req.headers.get('content-length')) > BODY_MAX) {
+    await req.body?.cancel();
+    return null;
+  }
+  if (!req.body) return '';
+  const reader = req.body.getReader(), decoder = new TextDecoder();
+  let size = 0, body = '';
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return body + decoder.decode();
+      size += value.byteLength;
+      if (size > BODY_MAX) { await reader.cancel(); return null; }
+      body += decoder.decode(value, { stream: true });
+    }
+  } finally { reader.releaseLock(); }
+}
+
 async function register(req, env) {
   const h = cors(req, env);
   if (!h) return json({ error: 'forbidden' }, 403);
   const ip = req.headers.get('cf-connecting-ip') ?? 'unknown';
   if (!(await env.REGISTER_LIMIT.limit({ key: ip })).success) return json({ error: 'slow down' }, 429, h);
+  const raw = await readBody(req);
+  if (raw === null) return json({ error: 'too large' }, 413, h);
   let name, message;
   try {
-    const body = await req.json();
+    const body = JSON.parse(raw);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new TypeError('not an object');
     name = text(body?.name, NAME_MAX);
     message = text(body?.message, MESSAGE_MAX);
   } catch {
@@ -58,9 +82,8 @@ const anonId = () => [...crypto.getRandomValues(new Uint8Array(2))].map((b) => b
 // Повтор с тем же operation_id ничего не меняет. Имя и сообщение берутся из заявки по label,
 // заявка после оплаты удаляется: второй платёж по тому же label идёт анонимно.
 async function yoomoney(req, env) {
-  if (Number(req.headers.get('content-length') ?? 0) > BODY_MAX) return new Response('too large', { status: 413 });
-  const body = await req.text();
-  if (body.length > BODY_MAX) return new Response('too large', { status: 413 });
+  const body = await readBody(req);
+  if (body === null) return new Response('too large', { status: 413 });
   const p = Object.fromEntries(new URLSearchParams(body));
   if (!(await verifySign(p, env.YOOMONEY_SECRET))) {
     // названия полей без значений: видно, чем уведомление отличается от ожидаемого, без персональных данных

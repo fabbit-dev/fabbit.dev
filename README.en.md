@@ -1,28 +1,50 @@
-# fabbit.dev
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/fabbit-logo-dark.png">
+    <img src="docs/img/fabbit-logo.png" width="368" alt="Fabbit">
+  </picture>
+</h1>
 
-[Русский](README.md) | [**English**](README.en.md)
+<p align="center">Landing page for Fabbit, an FPGA-based pocket instrument for electronics engineers.</p>
 
-Landing page for [Fabbit](https://fabbit.dev). The Russian version is at the root; the English version is at `/en/`.
+<p align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9-6e7781?style=for-the-badge" alt="Русский"></a>
+  <a href="README.en.md"><img src="https://img.shields.io/badge/English-0969da?style=for-the-badge" alt="English"></a>
+</p>
 
-## Local development
+<p align="center">
+  <a href="https://fabbit.dev/en/">Website</a> ·
+  <a href="https://github.com/fabbit-dev/fabbit">Instrument</a> ·
+  <a href="CONTRIBUTING.en.md">Contributing</a>
+</p>
 
-Requires Node.js and npm.
+## Run locally
+
+Node.js 22 and npm.
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Site: http://localhost:5190.
+Open [localhost:5190](http://localhost:5190). Russian at `/`, English at `/en/`.
 
-## Tests and build
+| Command | Purpose |
+|---|---|
+| `npm test` | Run Vitest tests |
+| `npm run build` | Build to `dist/` |
+| `npm run preview` | Preview the build at [localhost:4173](http://localhost:4173) |
 
-```bash
-npm test
-npm run build
-npm run preview
+## Inside
+
+Vite 7, JavaScript, three.js, GSAP and Tailwind 4. React renders the static Internals section at build time; we ship no React to the browser.
+
+```text
+index.html, en/   RU / EN pages
+src/             interface, 3D scene and tests
+src/build/       static Internals section
+public/          model and graphics
+worker/          donations API, separate package
 ```
 
-Build preview: http://localhost:4173.
-
-Repository guidelines: [CONTRIBUTING.en.md](CONTRIBUTING.en.md).
+Submit changes through PRs. A push to `main` publishes the site to GitHub Pages.

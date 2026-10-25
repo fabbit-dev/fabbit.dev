@@ -533,7 +533,7 @@ textarea.field__input { resize: vertical; }
 
   /* главы-истории короче: на телефоне то же самое за меньшее число экранов */
   .profiles { height: 300svh; }
-  .device { height: 250svh; }   /* разлёт, разворот и четыре подписи по очереди, ~220 px прокрутки на каждую */
+  .device { height: 250svh; }   /* разлёт, разворот и подписи основных узлов по очереди */
   .blueprint { height: 110svh; }
   /* карточка текста липнет сразу под полосой прибора: приходит вслед за прошлой главой, без пустых экранов */
   .sticky { top: var(--stage-h); height: auto; display: block; overflow: visible; }
@@ -575,8 +575,10 @@ textarea.field__input { resize: vertical; }
   .no-gl .profiles, .no-gl .device, .no-gl .blueprint { height: auto; }
   .no-gl .sticky { position: static; height: auto; }
   .no-gl .stage { display: none; }
+  .no-gl .hero { display: flex; flex-direction: column; }
+  .no-gl .hero .hero__inner { min-height: 0; padding-top: var(--s5); }
   .no-gl .hero__inner, .no-gl .sticky .wrap { padding-top: var(--nav-h); margin-top: 0; }
-  .no-gl .hero__fallback { position: static; transform: none; width: auto; height: 46svh; margin: var(--s7) auto 0; order: -1; }
+  .no-gl .hero__fallback { position: static; transform: none; width: auto; height: 46svh; margin: calc(var(--nav-h) + var(--s4)) auto 0; order: -1; }
   /* заставка в полосе прибора */
   .hero__fallback { right: auto; left: 50%; top: calc(var(--nav-h) + var(--s4)); transform: translateX(-50%); height: calc(var(--stage-h) - var(--nav-h) - var(--s7)); z-index: 5; }
 }

@@ -31,7 +31,7 @@ const nav = $('#nav');
 
 // Модель и затенение качаются заранее, параллельно с чанком three.js, — но только там, где будет 3D.
 if (webglOK()) {
-  for (const [href, as] of [['/models/fabbit_v1.glb', 'fetch'], ['/models/fabbit_ao.webp', 'image']]) {
+  for (const [href, as] of [['/models/fabbit.glb', 'fetch'], ['/models/fabbit_ao.webp', 'image']]) {
     document.head.append(Object.assign(document.createElement('link'), { rel: 'preload', href, as, crossOrigin: 'anonymous' }));
   }
 }
@@ -685,7 +685,7 @@ async function init3D() {
   // по прокрутке главы (phoneSpan считается в build()), в порядке, в каком они разворачиваются к камере.
   // разъёмы нижнего торца не в списке: спиной к камере их точка ложится на соседние детали
   // по группам деталей, а не по подписи: подписи зависят от языка
-  const PHONE_CALLOUTS = ['I9', 'Mezz', 'SMA', 'Battery']
+  const PHONE_CALLOUTS = ['FPGA', 'Analog', 'SMA', 'MCU', 'Radio', 'MIPI', 'Battery']
     .map((g) => sc.overlayData().callouts.findIndex((c) => c.group === g && !c.bp)).filter((i) => i >= 0);
   let phoneSpan = [0, 1];
   const placed = [];   // подписи этого кадра: [верх, низ] по сторонам, чтобы соседние не наезжали

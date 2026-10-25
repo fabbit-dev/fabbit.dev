@@ -106,7 +106,7 @@ export const PARTS = [
       en: 'A case for SLA printing. The battery sits under the back cover.',
     },
     specs: [
-      [{ ru: 'Корпус', en: 'Case' }, { ru: '88 × 150 × 22 мм', en: '88 × 150 × 22 mm' }],
+      [{ ru: 'Корпус', en: 'Case' }, { ru: '90 × 150 × 22,5 мм; над аналоговым модулем 24 мм', en: '90 × 150 × 22.5 mm; above the analog module 24 mm' }],
       [{ ru: 'Аккумулятор', en: 'Battery' }, { ru: 'Li-pol 1S, 2800 мА·ч', en: 'Li-Po 1S, 2800 mAh' }],
       ['USB-C', { ru: 'PD 3.1: заряд аккумулятора и выход 5 В до 1 А', en: 'PD 3.1: battery charging and 5 V output up to 1 A' }],
       [{ ru: 'Расчётная автономность', en: 'Estimated runtime' }, { ru: '3–9 ч по режимам', en: '3–9 hours depending on mode' }],

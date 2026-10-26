@@ -242,7 +242,27 @@
         </div>
         <div class="stats reveal" id="donate-stats">
           <p class="stats__label tech">Raised</p>
-          <p class="stats__total" data-total aria-live="polite"></p>
+          <p class="stats__total" id="donate-total" data-total aria-live="polite"></p>
+          <div class="goal" data-goal>
+            <div class="goal__heading tech">
+              <p id="donate-goal">Goal: 90,000&nbsp;₽</p>
+              <span data-percent></span>
+            </div>
+            <div data-goal-visual hidden>
+              <div class="goal__scene" aria-hidden="true">
+                <span class="goal__runner"><span class="goal__bunny pixel"></span></span>
+                <span class="goal__finish"></span>
+              </div>
+              <div class="goal__track" data-progress role="progressbar" aria-labelledby="donate-goal" aria-describedby="donate-total" aria-valuemin="0" aria-valuemax="90000">
+                <span class="goal__fill"></span>
+                <span class="goal__preview"></span>
+              </div>
+              <div class="goal__ticks tech" aria-hidden="true">
+                <span>0</span><span>30,000</span><span>60,000</span><span>90,000</span>
+              </div>
+              <p class="goal__note tech" data-preview aria-live="polite"></p>
+            </div>
+          </div>
           <a class="stats__link tech" href="/en/spent/">Where the money went <span aria-hidden="true">→</span></a>
           <p class="field__hint" data-error hidden>Stats did not load. You can still pay.</p>
           <div class="pick stats__sort tech" role="group" aria-label="Supporters">

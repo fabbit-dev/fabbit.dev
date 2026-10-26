@@ -55,6 +55,17 @@ describe.each([
     expect(doc.querySelector('meta[property="og:type"]').content).toBe('website');
   });
 
+  it('полоса сбора подписана целью 90 000 ₽, до загрузки не показывает ложный ноль', () => {
+    const progress = doc.querySelector('#donate-stats [data-progress]');
+    expect(progress.getAttribute('role')).toBe('progressbar');
+    expect(progress.getAttribute('aria-valuemax')).toBe('90000');
+    expect(progress.hasAttribute('aria-valuenow')).toBe(false);
+    expect(doc.getElementById(progress.getAttribute('aria-labelledby')).textContent)
+      .toBe(file.startsWith('en/') ? 'Goal: 90,000\u00a0₽' : 'Цель: 90\u00a0000\u00a0₽');
+    expect(doc.getElementById(progress.getAttribute('aria-describedby')).hasAttribute('data-total')).toBe(true);
+    expect(progress.closest('[data-goal-visual]').hasAttribute('hidden')).toBe(true);
+  });
+
   it('отделяет демонстрации от целевых функций, без блока ранних идей', () => {
     const section = doc.querySelector('#profiles');
     expect(section.textContent).not.toMatch(/Девять|Nine|Все каналы|All channels|\/ 09/);

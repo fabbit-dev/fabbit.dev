@@ -5,10 +5,12 @@ import { LANG, pick } from './i18n.js';
 export const API = import.meta.env?.VITE_DONATE_API ?? 'https://donate.fabbit.dev';
 const RECEIVER = '4100119646671169';
 const SUM_MIN = 100, SUM_MAX = 15_000;   // ЮMoney: перевод на кошелёк до 15 000 ₽
+const GOAL_KOP = 90_000 * 100;
 const NB = ' ';
 const T = {
   anon: { ru: 'Аноним', en: 'Anonymous' },
   receipt: { ru: 'Чек', en: 'Receipt' },
+  preview: { ru: 'С вашим донатом:', en: 'With your donation:' },
 };
 
 // Поля формы https://yoomoney.ru/quickpay/confirm (документация: yoomoney.ru/docs/payment-buttons/using-api/forms).
@@ -58,9 +60,29 @@ function item({ name, anon, message, amount_kop }, lang) {
   return li;
 }
 
+function renderProgress(root, totalKop, previewRub, lang) {
+  const goal = root.querySelector('[data-goal]');
+  const raised = Math.max(0, Math.min(1, totalKop / GOAL_KOP));
+  const projected = Math.max(raised, Math.min(1, (totalKop + (previewRub ?? 0) * 100) / GOAL_KOP));
+  const percent = (value) => new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'ru-RU', {
+    style: 'percent', maximumFractionDigits: 1,
+  }).format(value).replace(/\s/g, NB);
+  goal.style.setProperty('--raised', `${raised * 100}%`);
+  goal.style.setProperty('--projected', `${projected * 100}%`);
+  goal.style.setProperty('--position', `${projected * 100}%`);
+  goal.querySelector('[data-percent]').textContent = percent(raised);
+  const progress = goal.querySelector('[data-progress]');
+  progress.setAttribute('aria-valuenow', String(Math.max(0, Math.min(GOAL_KOP, totalKop)) / 100));
+  progress.setAttribute('aria-valuetext', `${formatRub(totalKop, lang)} / ${formatRub(GOAL_KOP, lang)}`);
+  goal.querySelector('[data-goal-visual]').hidden = false;
+  goal.querySelector('[data-preview]').textContent = previewRub != null && raised < 1
+    ? `${pick(T.preview, lang)} ${percent(projected)}` : '';
+}
+
 // Ответ GET /stats → разметка. page > 0 дописывает строки к уже показанным.
-export function renderStats(root, data, lang = LANG) {
+export function renderStats(root, data, lang = LANG, previewRub = null) {
   root.querySelector('[data-total]').textContent = formatRub(data.total_kop, lang);
+  renderProgress(root, data.total_kop, previewRub, lang);
   const list = root.querySelector('[data-list]');
   const items = data.items.map((d) => item(d, lang));
   if (data.page > 0) list.append(...items); else list.replaceChildren(...items);
@@ -77,8 +99,35 @@ export async function fetchJson(path, body) {
 }
 
 // Переключатель «Топ / Недавние» и «Показать ещё». Ответ, пришедший после смены вкладки, отбрасывается.
-function mountStats(root, get, lang) {
+function mountStats(root, get, lang, form) {
   let sort = 'top', page = 0, seq = 0;
+  let totalKop = null, previewRub = null, hop;
+  const goal = root.querySelector('[data-goal]');
+  if (typeof IntersectionObserver === 'undefined') goal.classList.add('is-visible');
+  else {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      goal.classList.add('is-visible');
+      observer.disconnect();
+    });
+    observer.observe(goal);
+  }
+  const preview = () => {
+    previewRub = parseSum(form.elements.sum.value);
+    if (totalKop == null) return;
+    renderProgress(root, totalKop, previewRub, lang);
+    const bunny = goal.querySelector('.goal__bunny');
+    hop?.cancel();
+    if (previewRub != null && totalKop < GOAL_KOP && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && bunny.animate) {
+      hop = bunny.animate([
+        { transform: 'translateY(0)' }, { transform: 'translateY(-12px)', offset: .45 }, { transform: 'translateY(0)' },
+      ], { duration: 400, easing: 'ease-out' });
+    }
+  };
+  if (form) {
+    form.addEventListener('input', (event) => { if (event.target === form.elements.sum) preview(); });
+    form.addEventListener('click', (event) => { if (event.target.closest('[data-sum]')) preview(); });
+  }
   const tabs = [...root.querySelectorAll('[data-sort]')];
   const more = root.querySelector('[data-more]');
   const error = root.querySelector('[data-error]');
@@ -88,7 +137,8 @@ function mountStats(root, get, lang) {
     try {
       const data = await get(`/stats?sort=${sort}&page=${nextPage}`);
       if (my !== seq) return;
-      renderStats(root, data, lang);
+      totalKop = data.total_kop;
+      renderStats(root, data, lang, previewRub);
       page = nextPage;   // номер меняется только после успешного ответа текущей вкладки
       error.hidden = true;
     } catch {
@@ -150,7 +200,7 @@ function mountForm(form, get, lang) {
 
 export function mountDonate({ form, stats, fetchJson: get = fetchJson, lang = LANG } = {}) {
   if (form) mountForm(form, get, lang);
-  if (stats) mountStats(stats, get, lang);
+  if (stats) mountStats(stats, get, lang, form);
 }
 
 // Страница «Траты»: expenses.json из репозитория, собрано из воркера (null: воркер недоступен).

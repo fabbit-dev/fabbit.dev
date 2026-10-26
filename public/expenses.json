@@ -1,1 +1,92 @@
-[]
+[
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Паяльная станция YIHUA982", "en": "YIHUA982 soldering station" },
+    "amount": 4548
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Оловоотсос Rexant", "en": "Rexant desoldering pump" },
+    "amount": 155
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Жало C210-018 OSS", "en": "C210-018 OSS soldering tip" },
+    "amount": 328
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Браслет ESD SK511-B", "en": "SK511-B ESD wrist strap" },
+    "amount": 199
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Паяльная паста XG50, 35 г", "en": "XG50 solder paste, 35 g" },
+    "amount": 479
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Коврик S120", "en": "S120 work mat" },
+    "amount": 402
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Третья рука с лупой", "en": "Helping hands with magnifier" },
+    "amount": 596
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Флюс-гель NC-559", "en": "NC-559 gel flux" },
+    "amount": 536
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Пинцет ESD-15", "en": "ESD-15 tweezers" },
+    "amount": 269
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Пинцет ESD-12", "en": "ESD-12 tweezers" },
+    "amount": 221
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Оплётка Goot Wick CP-2015", "en": "Goot Wick CP-2015 desoldering braid" },
+    "amount": 269
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Бронзовая губка для жала", "en": "Bronze soldering tip cleaner" },
+    "amount": 151
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Припой SX862, 0,5 мм, 60 г", "en": "SX862 solder, 0.5 mm, 60 g" },
+    "amount": 510
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Изопропиловый спирт, 100 мл", "en": "Isopropyl alcohol, 100 ml" },
+    "amount": 224
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Паяльный фен 858D", "en": "858D hot air rework station" },
+    "amount": 2056
+  },
+  {
+    "date": "2026-10-10",
+    "what": { "ru": "Мультиметр UNI-T UT61E+", "en": "UNI-T UT61E+ multimeter" },
+    "amount": 7889
+  },
+  {
+    "date": "2026-10-10",
+    "what": { "ru": "Дымоуловитель для пайки", "en": "Soldering fume extractor" },
+    "amount": 2210
+  },
+  {
+    "date": "2026-10-09",
+    "what": { "ru": "Первый заказ компонентов в Чип и Дип", "en": "First component order from ChipDip" },
+    "amount": 4011
+  }
+]

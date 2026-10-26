@@ -424,12 +424,41 @@ textarea.field__input { resize: vertical; }
 @media (hover: hover) { .pick button:hover { color: var(--fb-ink); text-decoration-color: currentColor; } }
 .pick button[aria-pressed="true"] { color: var(--fb-ink); text-decoration-color: currentColor; text-decoration-thickness: 2px; }
 
-.stats { padding-top: var(--s5); border-top: 1px solid var(--fb-ink); }
+.stats { padding-top: var(--space-heading); border-top: 1px solid var(--fb-ink); }
 .stats__label { margin: 0; font-size: var(--t-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--fb-text-3); }
 .stats__total { min-height: 1em; margin: var(--s2) 0; font-family: var(--fb-font-tech); font-size: var(--t-display); line-height: 1; letter-spacing: -.06em; color: var(--fb-ink); }
 .stats:has([data-error]:not([hidden])) .stats__total:empty { min-height: 0; margin: 0; }
 .stats__link { display: inline-flex; align-items: center; gap: var(--s1); min-height: 44px; font-size: var(--t-mono); color: var(--fb-ink); text-underline-offset: 4px; }
 .stats__sort { margin-top: var(--space-content); }
+/* Сбор: 90 клеток по 1 000 ₽. Штриховка показывает только предполагаемый вклад. */
+.goal { margin: var(--s4) 0 var(--s2); }
+.goal__heading { display: flex; justify-content: space-between; gap: var(--s3); font-size: var(--t-mono); line-height: var(--s4); color: var(--fb-text-2); }
+.goal__heading p { margin: 0; }
+.goal__heading [data-percent] { color: var(--fb-ink); font-variant-numeric: tabular-nums; }
+.goal__scene { position: relative; height: var(--s8); }
+.goal__runner { position: absolute; bottom: var(--s1); left: clamp(0px, calc(var(--position) - 24px), calc(100% - 48px)); width: 48px; height: 48px; transition: left .4s var(--ease); }
+.goal__bunny { display: block; width: 48px; height: 48px; background: url('/brand/anim/goal-bunny.svg') 0 0 / 48px 48px no-repeat; }
+.goal__finish { position: absolute; right: 0; bottom: 0; width: 2px; height: 28px; background: var(--fb-ink); }
+.goal__finish::after { content: ""; position: absolute; right: 2px; top: 0; width: 12px; height: 12px; background: conic-gradient(var(--fb-ink) 25%, transparent 0 50%, var(--fb-ink) 0 75%, transparent 0) 0 0 / 8px 8px; }
+.goal__track { position: relative; height: 12px; background: var(--fb-line); mask-image: repeating-linear-gradient(to right, #000 0 calc(100% / 90 - 2px), transparent calc(100% / 90 - 2px) calc(100% / 90)); }
+.goal__fill { position: absolute; inset: 0 auto 0 0; width: var(--raised); background: var(--fb-ink); }
+.goal__preview { position: absolute; inset: 0 auto 0 var(--raised); width: calc(var(--projected) - var(--raised)); background: repeating-linear-gradient(135deg, var(--fb-ink) 0 2px, transparent 2px 4px); transition: width .4s var(--ease); }
+.goal__ticks { position: relative; display: flex; justify-content: space-between; margin-top: var(--s2); font-size: var(--t-mono); line-height: var(--s4); color: var(--fb-text-3); font-variant-numeric: tabular-nums; }
+.goal__ticks span:nth-child(2), .goal__ticks span:nth-child(3) { position: absolute; transform: translateX(-50%); }
+.goal__ticks span:nth-child(2) { left: calc(100% / 3); }
+.goal__ticks span:nth-child(3) { left: calc(200% / 3); }
+.goal__note { min-height: var(--s4); margin: var(--s3) 0 0; font-size: var(--t-mono); line-height: var(--s4); color: var(--fb-text-2); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: no-preference) {
+  .goal.is-visible [data-goal-visual]:not([hidden]) .goal__runner { animation: goal-arrive .8s var(--ease); }
+  .goal.is-visible [data-goal-visual]:not([hidden]) .goal__bunny { animation: goal-bound .4s var(--ease) 2; }
+  .goal.is-visible [data-goal-visual]:not([hidden]) .goal__fill { transform-origin: left; animation: goal-fill .8s var(--ease); }
+}
+@keyframes goal-arrive { from { left: 0; } }
+@keyframes goal-bound { 50% { transform: translateY(-8px); } }
+@keyframes goal-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .goal__runner, .goal__preview { transition: none; }
+}
 /* ведомость: имя ……… сумма; сообщение строкой ниже */
 .ledger { margin: var(--s2) 0 0; padding: 0; list-style: none; }
 .entry { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--s2); padding: var(--s1) 0; font-size: var(--t-mono); }

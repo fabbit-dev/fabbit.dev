@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { quickpayFields, parseSum, formatRub, renderStats, mountDonate, renderExpenses } from './donate.js';
 
 const NB = ' ';
 const flush = () => new Promise((r) => setTimeout(r, 0));
+afterEach(() => vi.unstubAllGlobals());
 
 describe('форма ЮMoney', () => {
   it('поля quickpay для английской страницы; карту или кошелёк посетитель выбирает у ЮMoney', () => {
@@ -38,6 +39,14 @@ function statsDom() {
   document.body.innerHTML = `
     <div id="s">
       <p data-total></p>
+      <div data-goal>
+        <span data-percent></span>
+        <div data-goal-visual hidden>
+          <span class="goal__bunny"></span>
+          <div data-progress role="progressbar" aria-valuemin="0" aria-valuemax="90000"></div>
+          <p data-preview></p>
+        </div>
+      </div>
       <button type="button" data-sort="top" aria-pressed="true">top</button>
       <button type="button" data-sort="recent" aria-pressed="false">recent</button>
       <ol data-list></ol>
@@ -120,6 +129,8 @@ describe('статистика', () => {
     await flush();
     expect(root.querySelector('[data-error]').hidden).toBe(false);
     expect(root.querySelector('[data-total]').textContent).toBe('');
+    expect(root.querySelector('[data-goal-visual]').hidden).toBe(true);
+    expect(root.querySelector('[data-progress]').hasAttribute('aria-valuenow')).toBe(false);
   });
 
   it('ошибка старой страницы не меняет пагинацию новой вкладки', async () => {
@@ -173,6 +184,87 @@ describe('статистика', () => {
     more.click();
     await flush();
     expect(fetchJson.mock.calls.slice(1).map(([path]) => path)).toEqual(['/stats?sort=top&page=1', '/stats?sort=top&page=1']);
+  });
+});
+
+describe('полоса сбора', () => {
+  it.each([
+    [0, '0%', '0'], [4_500_000, '50%', '45000'], [9_000_000, '100%', '90000'], [10_000_000, '100%', '90000'],
+  ])('%i коп.: заполнение %s, доступное значение %s', (total_kop, width, value) => {
+    const root = statsDom();
+    renderStats(root, { ...TOP, total_kop }, 'ru');
+    expect(root.querySelector('[data-goal]').style.getPropertyValue('--raised')).toBe(width);
+    expect(root.querySelector('[data-progress]').getAttribute('aria-valuenow')).toBe(value);
+    expect(root.querySelector('[data-goal-visual]').hidden).toBe(false);
+    expect(root.querySelector('[data-total]').textContent).toBe(formatRub(total_kop, 'ru'));
+    expect(root.querySelector('[data-preview]').textContent).toBe('');
+  });
+
+  it.each([
+    ['ru', `48,9${NB}%`, `С вашим донатом: 54,5${NB}%`],
+    ['en', '48.9%', 'With your donation: 54.5%'],
+  ])('%s: факт и прогноз разделены, сумма факта не меняется', (lang, raised, preview) => {
+    const root = statsDom();
+    renderStats(root, { ...TOP, total_kop: 4_401_100 }, lang, 5000);
+    expect(root.querySelector('[data-percent]').textContent).toBe(raised);
+    expect(root.querySelector('[data-preview]').textContent).toBe(preview);
+    expect(root.querySelector('[data-progress]').getAttribute('aria-valuenow')).toBe('44011');
+    expect(root.querySelector('[data-total]').textContent).toBe(formatRub(4_401_100, lang));
+  });
+
+  it('прогноз ограничен целью; после достижения цели подписи прогноза нет', () => {
+    const root = statsDom();
+    renderStats(root, { ...TOP, total_kop: 8_900_000 }, 'en', 5000);
+    expect(root.querySelector('[data-goal]').style.getPropertyValue('--projected')).toBe('100%');
+    expect(root.querySelector('[data-preview]').textContent).toBe('With your donation: 100%');
+    renderStats(root, { ...TOP, total_kop: 9_100_000 }, 'en', 5000);
+    expect(root.querySelector('[data-preview]').textContent).toBe('');
+    expect(root.querySelector('[data-progress]').getAttribute('aria-valuetext')).toBe(`91,000${NB}₽ / 90,000${NB}₽`);
+  });
+
+  it.each([false, true])('кнопки и поле меняют прогноз; reduced-motion=%s', async (reduced) => {
+    const form = formDom();
+    const root = statsDom();
+    document.body.append(form);
+    vi.stubGlobal('matchMedia', () => ({ matches: reduced }));
+    const animate = vi.fn(() => ({ cancel: vi.fn() }));
+    root.querySelector('.goal__bunny').animate = animate;
+    mountDonate({ form, stats: root, fetchJson: async () => ({ ...TOP, total_kop: 4_500_000 }), lang: 'en' });
+    await flush();
+    expect(root.querySelector('[data-preview]').textContent).toBe('');
+    form.querySelector('[data-sum="300"]').click();
+    expect(root.querySelector('[data-preview]').textContent).toBe('With your donation: 50.3%');
+    expect(animate).toHaveBeenCalledTimes(reduced ? 0 : 1);
+    form.elements.sum.value = '5000';
+    form.elements.sum.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(root.querySelector('[data-preview]').textContent).toBe('With your donation: 55.6%');
+    form.elements.sum.value = '99';
+    form.elements.sum.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(root.querySelector('[data-preview]').textContent).toBe('');
+    expect(root.querySelector('[data-goal]').style.getPropertyValue('--projected')).toBe('50%');
+    expect(root.querySelector('[data-total]').textContent).toBe(`45,000${NB}₽`);
+    expect(form.submit).not.toHaveBeenCalled();
+  });
+
+  it('ввод до ответа API сохраняется; отказ следующего запроса не сбрасывает факт', async () => {
+    const form = formDom();
+    const root = statsDom();
+    document.body.append(form);
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    let resolve;
+    const fetchJson = vi.fn().mockImplementationOnce(() => new Promise((r) => { resolve = r; }))
+      .mockRejectedValueOnce(new Error('offline'));
+    mountDonate({ form, stats: root, fetchJson, lang: 'en' });
+    form.querySelector('[data-sum="300"]').click();
+    expect(root.querySelector('[data-goal-visual]').hidden).toBe(true);
+    resolve({ ...TOP, total_kop: 4_500_000 });
+    await flush();
+    expect(root.querySelector('[data-preview]').textContent).toBe('With your donation: 50.3%');
+    root.querySelector('[data-sort="recent"]').click();
+    await flush();
+    expect(root.querySelector('[data-error]').hidden).toBe(false);
+    expect(root.querySelector('[data-goal-visual]').hidden).toBe(false);
+    expect(root.querySelector('[data-progress]').getAttribute('aria-valuenow')).toBe('45000');
   });
 });
 

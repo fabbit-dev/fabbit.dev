@@ -27,4 +27,17 @@ describe('единый ритм интерфейса', () => {
     expect(main).toContain("2 * space['screen-gutter']");
     expect(main).not.toContain('brand.offsetTop + 24 + 32');
   });
+
+  it('использует адаптивный отступ заголовка над статистикой сбора', () => {
+    expect(css).toMatch(/\.stats \{[^}]*padding-top: var\(--space-heading\)/);
+  });
+
+  it('держит строки шкалы на сетке 4 px, резервирует место под прогноз', () => {
+    for (const cls of ['goal__heading', 'goal__ticks', 'goal__note']) {
+      expect(css).toMatch(new RegExp(`\\.${cls} \\{[^}]*line-height: var\\(--s4\\)`));
+    }
+    expect(css).toMatch(/\.goal__note \{[^}]*min-height: var\(--s4\)/);
+    expect(css).toMatch(/\.goal__ticks \{[^}]*margin-top: var\(--s2\)/);
+    expect(css).toMatch(/\.goal__note \{[^}]*margin: var\(--s3\) 0 0/);
+  });
 });

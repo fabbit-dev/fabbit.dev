@@ -53,18 +53,21 @@ export const DIMENSIONS = [
   { a: [45, -12, 0], b: [45, -12, -22.5], label: { ru: '22,5', en: '22.5' } },
 ];
 
-// mobile: без MSAA и с потолком плотности 1.5 — на телефоне экран мелкий, а заливка пикселей дорогая.
+// mobile: без MSAA и с потолком плотности 1.25 — заливка пикселей дороже геометрии.
 // bob — лёгкое покачивание в простое; без него кадр может «успокоиться», и loop перестаёт рисовать.
 export async function createScene(canvas, screen, { mobile = false, bob = true, lang = 'ru' } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobile, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.5 : 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.0;
 
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  const room = new RoomEnvironment();
+  scene.environment = pmrem.fromScene(room, 0.04, 0.1, 100, { size: mobile ? 128 : 256 }).texture;
+  room.dispose();
+  pmrem.dispose();
   scene.environmentIntensity = 0.55;
 
   // Без живых теней: форму рисуют направленный свет и запечённое затенение.
@@ -99,8 +102,10 @@ export async function createScene(canvas, screen, { mobile = false, bob = true, 
 
   // Монохром бренда: светлый матовый корпус, светлый металл разъёмов, чёрные платы и микросхемы.
   const mats = {
-    shell: new THREE.MeshPhysicalMaterial({ color: 0xE6E6E6, roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.6 }),
-    panel: new THREE.MeshPhysicalMaterial({ color: 0x050505, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05 }),
+    shell: mobile ? new THREE.MeshStandardMaterial({ color: 0xE6E6E6, roughness: 0.58 })
+      : new THREE.MeshPhysicalMaterial({ color: 0xE6E6E6, roughness: 0.58, clearcoat: 0.12, clearcoatRoughness: 0.6 }),
+    panel: mobile ? new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.12 })
+      : new THREE.MeshPhysicalMaterial({ color: 0x050505, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05 }),
     metal: new THREE.MeshStandardMaterial({ color: 0xD9D9D9, metalness: 1, roughness: 0.28 }),
     steel: new THREE.MeshStandardMaterial({ color: 0xA3A3A3, metalness: 1, roughness: 0.35 }),
     alu: new THREE.MeshStandardMaterial({ color: 0xC4C4C4, metalness: 1, roughness: 0.5 }),

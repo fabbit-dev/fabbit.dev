@@ -8,6 +8,7 @@ vi.mock('gsap', () => ({ default: {
 vi.mock('gsap/ScrollTrigger', () => ({ ScrollTrigger: {
   create: (options) => { triggers.push(options); return { isActive: false }; },
   refresh: vi.fn(), addEventListener: vi.fn(),
+  config: vi.fn(),
 } }));
 
 it('без WebGL профили выбираются кнопками, а не длиной 3D-главы', async () => {

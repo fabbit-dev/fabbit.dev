@@ -238,7 +238,7 @@ section[id] { scroll-margin-top: calc(var(--nav-h) + var(--s3)); }
 .stage { position: sticky; top: 0; height: 100vh; pointer-events: none; }
 .stage.is-off { visibility: hidden; }     /* история прокручена: WebGL не рисует, слой не композитится */
 /* прибор можно повернуть пальцем или мышью: горизонтальный жест крутит, вертикальный остаётся прокруткой */
-#gl { pointer-events: auto; touch-action: pan-y; cursor: grab; }
+#gl { pointer-events: auto; touch-action: pan-y pinch-zoom; cursor: grab; }
 #gl:active { cursor: grabbing; }
 .sticky, .scene .wrap { pointer-events: none; }   /* пустые места над прибором пропускают жест к холсту */
 .scene .wrap > * { pointer-events: auto; }
@@ -594,7 +594,7 @@ textarea.field__input { resize: vertical; }
 
   /* главы-истории короче: на телефоне то же самое за меньшее число экранов */
   .profiles { height: 300svh; }
-  .device { height: 250svh; }   /* разлёт, разворот и подписи основных узлов по очереди */
+  .device { height: 650svh; }   /* разлёт и семь деталей: у каждой свой читаемый участок и остановка */
   .blueprint { height: 110svh; }
   /* карточка текста липнет сразу под полосой прибора: приходит вслед за прошлой главой, без пустых экранов */
   .sticky { top: var(--stage-h); height: auto; display: block; overflow: visible; }

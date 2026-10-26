@@ -19,8 +19,12 @@ import { mountMenu } from './menu.js';
 import { isPhoneLayout, isLandscapePhone, slotY, stageHeight } from './layout.js';
 import { mountChipFlights } from './chipFlight.js';
 import { mountDonate } from './donate.js';
+import { mountModelDrag } from './modelDrag.js';
+import { dampPose } from './modelMotion.js';
 
 gsap.registerPlugin(ScrollTrigger);
+// Панель адреса телефона не меняет геометрию глав в svh. Полный refresh во время свайпа рвёт движение.
+ScrollTrigger.config({ ignoreMobileResize: true });
 document.documentElement.classList.add('js');
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -46,6 +50,15 @@ const nat = {};   // телефон: высота текста глав исто
 const root = document.documentElement.style;
 // CSS владеет ритмом; 3D использует те же отступы при замере доступного места.
 const space = {};
+let bandBounds;
+function measureBand() {
+  const profiles = $('#profiles').getBoundingClientRect();
+  bandBounds = {
+    top: profiles.top + scrollY, bottom: profiles.bottom + scrollY,
+    heroTop: $('.hero__title').getBoundingClientRect().top + scrollY,
+    navBottom: nav.getBoundingClientRect().bottom,
+  };
+}
 function measureSpacing() {
   const css = getComputedStyle(document.documentElement);
   for (const name of ['hero-pad-start', 'hero-pad-end', 'screen-gutter', 'screen-gap', 'stage-label-space', 's4']) {
@@ -64,9 +77,9 @@ function layoutStage() {
   document.documentElement.classList.add('is-measuring');
   const cards = $$('.sticky .wrap').map((w) => w.offsetHeight);
   document.documentElement.classList.remove('is-measuring');
-  stageH = stageHeight({ vh: innerHeight, cards: [hero, ...cards] });
+  stageH = stageHeight({ vh: svhPx, cards: [hero, ...cards] });
   // Ограничения функций длиннее двух строк: оставляем тексту его фактическую высоту.
-  stageH = Math.min(stageH, Math.max(nav.getBoundingClientRect().bottom, innerHeight - Math.max(...cards)));
+  stageH = Math.min(stageH, Math.max(nav.getBoundingClientRect().bottom, svhPx - Math.max(...cards)));
   root.setProperty('--stage-h', `${stageH}px`);
   // высота текста каждой главы: текст прижат к низу экрана, всё выше него — место прибора (band в init3D)
   $$('.sticky .wrap').forEach((w, i) => { nat[w.closest('section').id] = cards[i]; });
@@ -77,6 +90,7 @@ function layoutStage() {
   root.setProperty('--canvas-h', `${svhPx - Math.min(hero, ...cards)}px`);
   // полоса во всю высоту уезжает вместе с последней главой, как только та начинает уходить
   storyTail = 0;
+  measureBand();
   bandBg();
 }
 // Цвет полосы на телефоне — «шторкой». Тёмная глава «Профили» поднимается снизу, а над её краем такой же
@@ -96,7 +110,8 @@ function setBand(bg, mask, composite = '') {
 }
 function bandBg() {
   if (!mobile()) { setBand('', ''); return; }
-  const r = $('#profiles').getBoundingClientRect(), vh = innerHeight, H = stageH;
+  if (!bandBounds) return;
+  const r = { top: bandBounds.top - scrollY, bottom: bandBounds.bottom - scrollY }, vh = svhPx, H = stageH;
   const fast = (edge) => Math.round(Math.max(0, vh * (edge - H) / (vh - H)));
   const W = '#fff', D = '#0A0A0A';
   let g;
@@ -115,14 +130,14 @@ function bandBg() {
   const canvasH = svhPx - Math.min(...Object.values(nat));
   // выход из главы — от «карточка начала уезжать» (низ главы у низа экрана) до «глава ушла под полосу»
   // hero: край — верх заголовка; уезжая вверх, текст закрывает прибор снизу и не ложится на него
-  const heroTop = $('.hero__title').getBoundingClientRect().top - 12;
+  const heroTop = bandBounds.heroTop - scrollY - 12;
   const clip = r.top > stageH ? Math.max(stageH, Math.min(canvasH, heroTop))
-    : r.bottom >= innerHeight ? stageH : r.bottom <= stageH ? canvasH
-    : stageH + (canvasH - stageH) * (innerHeight - r.bottom) / (innerHeight - stageH);
+    : r.bottom >= vh ? stageH : r.bottom <= stageH ? canvasH
+    : stageH + (canvasH - stageH) * (vh - r.bottom) / (vh - stageH);
   // На подходе к «Профилям» и выходе из них корпус не растворяется в серую муть, а «сжимается в экран»:
   // маска сужается до прямоугольника плоского экрана (и расширяется обратно на выходе)
-  const approach = r.top > stageH && r.top < innerHeight ? (innerHeight - r.top) / (innerHeight - stageH) : 0;
-  const leave = r.bottom < innerHeight && r.bottom > stageH ? (innerHeight - r.bottom) / (innerHeight - stageH) : -1;
+  const approach = r.top > stageH && r.top < vh ? (vh - r.top) / (vh - stageH) : 0;
+  const leave = r.bottom < vh && r.bottom > stageH ? (vh - r.bottom) / (vh - stageH) : -1;
   const t = approach ? Math.min(1, Math.max(0, (approach - 0.45) / 0.48)) : leave >= 0 ? Math.max(0, 1 - leave / 0.6) : 0;
   if (t > 0) {
     const f = flatRect(), mg = (1 - t) * 420, e = 18;   // запас вокруг экрана и мягкость края, px
@@ -138,7 +153,7 @@ function bandBg() {
 // Где на телефоне стоит плоский экран профилей (#stage-screen): поля 16 px, сверху шапка + 12, снизу текст главы, 4 : 3.
 // Те же числа берёт поза прибора K.profiles в init3D.
 function flatRect() {
-  const top = nav.getBoundingClientRect().bottom + space['screen-gap'], boxH = svhPx - nat.profiles - top - space['screen-gutter'];
+  const top = bandBounds.navBottom + space['screen-gap'], boxH = svhPx - nat.profiles - top - space['screen-gutter'];
   const w = Math.min(innerWidth - 2 * space['screen-gutter'], boxH * 4 / 3), h = w * 3 / 4;
   const x0 = (innerWidth - w) / 2, y0 = top + (boxH - h) / 2;
   return { x0, x1: x0 + w, y0, y1: y0 + h };
@@ -276,16 +291,17 @@ function scrollToProfile(i) {
   glide(profileY(i), 1.4);
 }
 
-// ── Телефон: профили по одному за жест ─────────────
+// ── Телефон: профили и детали по одному за жест ────
 // У каждого профиля своя точка привязки со scroll-snap-stop: always: браузер не пролетает через неё,
 // как бы сильно ни мотнули, но прокрутка остаётся родной, с инерцией. Привязка включена от верха страницы
-// до карточки «Корпуса»: в hero две остановки (самый верх и лид целиком), дальше профили, последняя — «Корпус».
-// Дойдя до «Корпуса», страница снова листается свободно. С верха включена сразу: если включать её на входе
+// до карточки «Чертежа»: в hero две остановки, дальше профили, «Корпус» и семь деталей.
+// Дойдя до «Чертежа», страница снова листается свободно. С верха включена сразу: если включать её на входе
 // в главу, жест, начатый без привязки, пролетает через профили.
 const snapMarks = Object.assign(document.createElement('div'), { className: 'psnap' });
 snapMarks.setAttribute('aria-hidden', 'true');
 $('#profiles').append(snapMarks);
 let snapZone = null;
+let detailStops = [];
 function layoutSnap() {
   snapMarks.replaceChildren();
   snapZone = null; snapYs = [];
@@ -296,13 +312,14 @@ function layoutSnap() {
   const heroEnd = Math.max(0, Math.round(leadBottom + 24 - innerHeight));
   const deviceAt = Math.round($('#device').getBoundingClientRect().top + scrollY - stageH + 2);   // как у якоря «Корпус»
   const hero = heroEnd > 40 ? [0, heroEnd] : [0];
-  snapYs = [...hero, ...PROFILES.map((_, i) => Math.round(profileY(i))), deviceAt];
+  const blueprintAt = Math.round($('#blueprint').getBoundingClientRect().top + scrollY - stageH + 2);
+  snapYs = [...hero, ...PROFILES.map((_, i) => Math.round(profileY(i))), deviceAt, ...detailStops, blueprintAt];
   for (const y of snapYs) {
     const m = document.createElement('i');
     m.style.top = `${y - secTop}px`;
     snapMarks.append(m);
   }
-  snapZone = deviceAt;
+  snapZone = blueprintAt;
   syncSnap();
 }
 function syncSnap() {
@@ -319,9 +336,8 @@ addEventListener('scrollend', () => {
   if (Math.abs(near - scrollY) > 2) scrollTo({ top: near, behavior: reduced ? 'auto' : 'smooth' });
 });
 ScrollTrigger.addEventListener('refresh', layoutSnap);
-// Страховка на нижней границе: на «Корпусе» привязка выключена, и когда жест вверх её включает,
-// браузер может тут же притянуть страницу обратно к «Корпусу». Если жест вверх начался здесь,
-// а страница так и осталась на месте, сами доводим до последнего профиля.
+// Страховка на нижней границе: если включение привязки поймало жест вверх на «Чертеже»,
+// доводим до предыдущей остановки.
 let touchY0 = 0, scrollY0 = 0;
 addEventListener('touchstart', (e) => { touchY0 = e.touches[0].clientY; scrollY0 = scrollY; }, { passive: true });
 addEventListener('touchend', (e) => {
@@ -470,12 +486,14 @@ else init3D().catch(fallback);
 async function init3D() {
   const canvas = $('#gl');
   const stage = $('.stage');
+  // Телефон на боку использует широкую раскладку, но ему всё ещё нужен лёгкий рендер.
+  const lowPower = mobile() || matchMedia('(pointer: coarse)').matches;
   // three.js (самый тяжёлый чанк) качается сразу, а не после экрана
   const sceneModule = import('./scene.js');
   sceneModule.catch(() => {});   // ошибку отдаст Promise.all ниже, здесь только без «unhandled rejection»
   const { createScreen } = await import('./screen.js');
-  // экран 640×480 рисуется в 2× (1280×960); на телефонах хватает 1.5×
-  const screen = createScreen({ scale: mobile() ? 1.5 : 2, lang: LANG }); // стартовый масштаб, дальше подгоняется
+  // Стартуем с небольшой текстуры; loop подгонит её под размер экрана в кадре.
+  const screen = createScreen({ scale: lowPower ? 0.75 : 1, lang: LANG }); // стартовый масштаб, дальше подгоняется
   // сцена и шрифты для экрана грузятся параллельно
   const [{ createScene }] = await Promise.all([
     sceneModule,
@@ -484,9 +502,14 @@ async function init3D() {
     document.fonts.load('500 10px "JetBrains Mono"', LANG === 'en' ? 'BREAK abc' : 'ОБРЫВ abc').catch(() => {}),
   ]);
   // без покачивания: неподвижный прибор даёт кадру «успокоиться», и GPU простаивает
-  const sc = await createScene(canvas, screen, { mobile: mobile(), bob: false, lang: LANG });
+  const sc = await createScene(canvas, screen, { mobile: lowPower, bob: false, lang: LANG });
   const { state, extra } = sc;
-  onProfile = (i) => { if (screen.mode === 'profile') screen.setMode('profile', i); };
+  let running = true, frameId = 0, idleFrames = 0;
+  function wake() {
+    if (!running || document.hidden || frameId) return;
+    frameId = requestAnimationFrame(loop);
+  }
+  onProfile = (i) => { if (screen.mode === 'profile') screen.setMode('profile', i); wake(); };
 
   let phone = mobile();          // раскладка, под которую собрана временная шкала
   const frameH = () => canvas.clientHeight;
@@ -548,6 +571,8 @@ async function init3D() {
   // Прокрутка двигает цель, а прибор догоняет её затуханием в loop(): рывки колеса мыши
   // сглаживаются, а на любой частоте кадров движение одинаковое.
   const target = { ...K.hero() };
+  // GSAP добавляет target._gsap: это служебный объект, не координата. В затухание идут только поля позы.
+  const poseKeys = Object.keys(target);
   Object.assign(state, target);
   if (import.meta.env.DEV) window.__fabbit = { sc, target, screen, K, ST: ScrollTrigger, tl: () => tl };   // отладка ракурсов из консоли
 
@@ -555,7 +580,7 @@ async function init3D() {
   function build() {
     tl?.scrollTrigger?.kill(); tl?.kill();
     const story = $('#story');
-    const vh = innerHeight;
+    const vh = phone ? svhPx : innerHeight;
     const off = (sel) => $(sel).offsetTop - story.offsetTop;
     const h = (sel) => $(sel).offsetHeight;
     const P = off('#profiles'), D = off('#device'), B = off('#blueprint');
@@ -577,11 +602,13 @@ async function init3D() {
     // Телефон: всё, пока карточка стоит под полосой и до начала чертежа; разлёт и разворот идут быстрее,
     // а остаток прибор стоит спиной, и рядом по очереди подписываются главные детали (phoneSpan).
     const Dr = phone ? Math.min(h('#device') - $('#device .sticky .wrap').offsetHeight, B - vh - (D - at)) : h('#device') - vh;
-    const [b1, c0, c1] = phone ? [0.14, 0.18, 0.38] : [0.35, 0.42, 0.88];
-    seg('devA', 'devB', D - at, D - at + Dr * b1, 'power3.out');
-    seg('devB', 'devC', D - at + Dr * c0, D - at + Dr * c1);
+    const motion = phone ? Math.min(Dr, vh * 1.1) : Dr;
+    seg('devA', 'devB', D - at, D - at + motion * 0.35, 'power3.out');
+    seg('devB', 'devC', D - at + motion * 0.42, D - at + motion * 0.88);
     const storyTop = story.getBoundingClientRect().top + scrollY;
-    phoneSpan = [storyTop + D - at + Dr * (c1 + 0.03), storyTop + D - at + Dr - 80];   // гаснут раньше текста главы
+    phoneSpan = [storyTop + D - at + motion + 32, storyTop + D - at + Dr - 80];
+    detailStops = phone ? PHONE_CALLOUTS.map((_, i) => Math.round(phoneSpan[0] + (phoneSpan[1] - phoneSpan[0]) * (i + 0.5) / PHONE_CALLOUTS.length)) : [];
+    layoutSnap();
     seg('devC', 'bp', B - vh, B - at);
     // дальше чертёж стоит: из кадра его уносит сама полоса прибора вместе с главой (.stage-track в CSS)
     tl.to({}, { duration: 0 }, Bend);
@@ -589,6 +616,7 @@ async function init3D() {
     Object.assign(target, K.hero());
     tl.scrollTrigger.update?.();
     tl.progress(tl.scrollTrigger.progress);
+    idleFrames = 0; wake();
   }
 
   // Телефон, профили: вместо прибора в полосе показывается сам экран — крупно, без корпуса.
@@ -600,13 +628,14 @@ async function init3D() {
     flatAttached = true;
     flat.append(screen.canvas);
     const w = flat.clientWidth - 2 * space['screen-gutter'];
-    if (screen.setScale(Math.min(2.5, Math.max(1, Math.ceil(w * devicePixelRatio / 640 * 4) / 4)))) sc.screenResized();
+    if (screen.setScale(Math.min(2, Math.max(0.5, Math.ceil(w * Math.min(devicePixelRatio, 2) / 640 * 4) / 4)))) sc.screenResized();
   }
   function showFlatScreen(on) {
     if (on === flatOn) return;
     flatOn = on; flatAt = performance.now();
     if (on) attachFlat();
     flat.classList.toggle('is-on', on);
+    wake();
   }
   // Подход к профилям на телефоне: пока тёмная глава поднимается к полосе, фон полосы темнеет вместе
   // с прокруткой, а плоский экран проявляется поверх 3D. Раньше полоса оставалась белой до последнего,
@@ -647,12 +676,13 @@ async function init3D() {
     if (e.pointerType !== 'mouse') return;
     mouse.x = e.clientX / innerWidth * 2 - 1;
     mouse.y = e.clientY / innerHeight * 2 - 1;
+    wake();
   }, { passive: true });
 
   // Интро
   if (!reduced) {
     Object.assign(extra, { ry: -1.2, rx: 0.25, y: -0.2, s: 0.9 });
-    gsap.to(extra, { ry: 0, rx: 0, y: 0, s: 1, duration: 2.2, ease: 'expo.out', delay: 0.1 });
+    gsap.to(extra, { ry: 0, rx: 0, y: 0, s: 1, duration: 2.2, ease: 'expo.out', delay: 0.1, onUpdate: wake });
     gsap.fromTo(canvas, { opacity: 0 }, { opacity: 1, duration: 1.2, ease: 'power2.out' });
   }
   // рендер-заставка больше не нужна: её сменяет живой прибор
@@ -715,7 +745,8 @@ async function init3D() {
     if (!labelW.length) measure();
     const data = sc.overlayData();
     svg.style.opacity = 1; calloutsEl.style.opacity = 1;
-    const vw = stage.clientWidth;
+    const vw = innerWidth;
+    if (!phone && state.lines > 0.5) hint.style.left = `${data.center[0] | 0}px`;
     // подписи держатся в 16 px от края окна; прибор для этого сдвинут влево запасом reserve в slot()
     const gridRight = vw - 16;
     const gap = phone ? 12 : innerWidth < 1280 ? 24 : 40;
@@ -782,7 +813,6 @@ async function init3D() {
   }
 
   // Рендер только пока история на экране; после неё слой прячется целиком
-  let running = true, idleFrames = 0;
   ScrollTrigger.create({
     // слой прячется, когда полоса прибора целиком уехала за верх экрана (на телефоне она кончается над карточкой)
     trigger: '#story', start: 'top bottom', end: () => `bottom ${storyTail}px`,
@@ -794,12 +824,13 @@ async function init3D() {
     stage.classList.toggle('is-off', !on);
     if (on === running) return;
     running = on;
-    if (running) { idleFrames = 0; requestAnimationFrame(loop); }
+    if (running) { idleFrames = 0; wake(); }
+    else { cancelAnimationFrame(frameId); frameId = 0; }
   }
 
   // Поворот пальцем или мышью: горизонтальный жест крутит прибор, после отпускания он плавно возвращается
   // в ракурс главы. Вертикальный жест остаётся прокруткой (touch-action: pan-y в CSS).
-  const drag = { ry: 0, active: false, used: false, x0: 0, start: 0 };
+  const drag = mountModelDrag(canvas, { reduced, onChange: () => { idleFrames = 0; clock.prev = performance.now(); wake(); } });
   const hint = $('.stage__hint');
   // история уходит с экрана: подсказка гаснет сразу, а не висит одна между главами
   let leaving = false;
@@ -807,58 +838,41 @@ async function init3D() {
     trigger: '#story', start: () => `bottom ${innerHeight}px`, end: 'max',
     onToggle: (self) => { leaving = self.isActive; },
   });
-  canvas.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    Object.assign(drag, { active: true, x0: e.clientX, start: drag.ry });
-    gsap.killTweensOf(drag);
-    canvas.setPointerCapture(e.pointerId);
-    idleFrames = 0;
+  addEventListener('scroll', wake, { passive: true });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(frameId); frameId = 0; }
+    else { clock.prev = performance.now(); idleFrames = 0; wake(); }
   });
-  canvas.addEventListener('pointermove', (e) => {
-    if (!drag.active) return;
-    drag.ry = drag.start + ((e.clientX - drag.x0) / canvas.clientWidth) * Math.PI * 1.6;
-    if (Math.abs(e.clientX - drag.x0) > 8) drag.used = true;
-    idleFrames = 0;
-  });
-  const release = () => {
-    if (!drag.active) return;
-    drag.active = false;
-    gsap.to(drag, { ry: 0, duration: 0.6, delay: reduced ? 0 : 0.8, ease: 'power3.inOut' });
-  };
-  canvas.addEventListener('pointerup', release);
-  canvas.addEventListener('pointercancel', release);
 
   const clock = { t0: performance.now(), lastScreen: 0 };
+  screen.ready.then(() => { clock.lastScreen = -1; idleFrames = 0; wake(); });
   function loop(now) {
-    if (!running) return;
+    frameId = 0;
+    if (!running || document.hidden) return;
     const t = (now - clock.t0) / 1000;
     const dt = Math.min(0.1, (now - (clock.prev ?? now)) / 1000);
     clock.prev = now;
     // затухание к цели: постоянная времени ~0.12 с поверх инерции Lenis; без анимаций прибор сразу встаёт на место
     const k = reduced ? 1 : 1 - Math.exp(-dt * 8);
-    let moving = 0;
-    for (const key in target) {
-      // NaN в затухании не уходит никогда: сразу встаём на цель
-      if (!Number.isFinite(state[key])) state[key] = Number.isFinite(target[key]) ? target[key] : 0;
-      const d = target[key] - state[key]; state[key] += d * k; moving = Math.max(moving, Math.abs(d));
-    }
+    let moving = dampPose(state, target, poseKeys, k);
     // мышь плавно
     const km = 1 - Math.exp(-dt * 2.5);
     const dry = mouse.x * 0.18 - (extra.mry || 0), drx = mouse.y * 0.08 - (extra.mrx || 0);
     extra.mry = (extra.mry || 0) + dry * km;
     extra.mrx = (extra.mrx || 0) + drx * km;
     moving = Math.max(moving, Math.abs(dry), Math.abs(drx));
+    const dragging = drag.update(dt);
     const baseRy = extra.ry, baseRx = extra.rx;
     extra.ry = baseRy + extra.mry + drag.ry; extra.rx = baseRx + extra.mrx;
     const screenOn = flatOn || sc.screenVisible();
     // Разрешение экрана под размер в кадре с запасом 1.5×: прибор повёрнут и качается,
     // поэтому текстура чуть уменьшается при выборке, а не растягивается — так контуры остаются резкими.
-    // Шаг 0.25×, от 1× до 2× (на телефоне до 1.5×): больше глаз не различает, а загрузка в GPU дороже.
+    // Шаг 0.25×, от 0.5× до 2× (на телефоне до 1.5×): мелкому экрану не нужна мегапиксельная текстура.
     if (screenOn && !flatAttached && now - (clock.lastFit || 0) > 300) {
       clock.lastFit = now;
       const [pw, ph] = sc.screenPixels();
       const need = Math.max(pw / 640, ph / 480) * 1.5;
-      const want = Math.min(phone ? 1.5 : 2, Math.max(1, Math.ceil(need * 4) / 4));
+      const want = Math.min(lowPower ? 1.5 : 2, Math.max(0.5, Math.ceil(need * 4) / 4));
       // растём сразу, уменьшаемся только при заметной разнице, чтобы не дёргать текстуру
       if (want > screen.scale || want < screen.scale - 0.5) {
         if (screen.setScale(want)) { sc.screenResized(); clock.lastScreen = -1; }
@@ -868,41 +882,42 @@ async function init3D() {
     let screenChanged = false;
     if (screenOn && t - clock.lastScreen > 1 / 30) { screenChanged = screen.draw(t); clock.lastScreen = t; }
     // без покачивания, движения и смены экрана кадр тот же: не рисуем его заново
-    const still = moving < 1e-4 && !screenChanged && !sc.bobbing && !gsap.isTweening(extra) && !gsap.isTweening(drag) && !drag.active;
+    const still = moving < 1e-4 && !screenChanged && !sc.bobbing && !gsap.isTweening(extra) && !dragging && !drag.active;
     hint.classList.toggle('is-on', state.lines > 0.8 && !leaving && !drag.used);
     stage.classList.toggle('can-drag', state.lines > 0.8 && !leaving);
     // широкий экран: подсказка под самим прибором, а не посередине страницы
-    if (!phone && state.lines > 0.5) hint.style.left = `${sc.overlayData().center[0] | 0}px`;
-    else if (phone) hint.style.left = '';
+    if (phone) hint.style.left = '';
     idleFrames = still ? idleFrames + 1 : 0;
     // телефон, разборка: прибор стоит, а подписи сменяются по прокрутке — кадр нужен и без движения
+    let overlayChanged = false;
     if (phone && scrollY !== clock.sy) {
       clock.sy = scrollY;
-      if (scrollY > phoneSpan[0] - 60 && scrollY < phoneSpan[1] + 60) idleFrames = 0;
+      if (scrollY > phoneSpan[0] - 60 && scrollY < phoneSpan[1] + 60) overlayChanged = true;
     }
     // экран на полосе закрыл прибор целиком (переход 0,35 с кончился) — 3D не рисуем
     if (now - flatAt < 450) idleFrames = 0;
     if (idleFrames < 3 && !(flatOn && now - flatAt > 450)) {
       sc.render(reduced ? 0 : t, screenChanged);
       drawOverlay();
-    }
+    } else if (overlayChanged) drawOverlay();
     extra.ry = baseRy; extra.rx = baseRx;
-    requestAnimationFrame(loop);
+    if (idleFrames < 3 || screenOn || now - flatAt < 450) wake();
   }
 
   // Смена раскладки. На телефоне resize прилетает и при появлении панели адреса:
-  // если ширина та же, раскладку не пересобираем, только размер холста.
-  let rt, lastW = innerWidth;
+  // если ширина та же, не пересобираем раскладку и не сбрасываем WebGL-холст.
+  let rt, lastW = innerWidth, lastH = innerHeight;
   addEventListener('resize', () => {
     clearTimeout(rt);
     rt = setTimeout(() => {
-      sc.resize();
-      idleFrames = 0;
       // раскладка зависит и от высоты (телефон на боку), поэтому пересобираем и при её смене
-      if (innerWidth === lastW && mobile() === phone) return;
+      if (innerWidth === lastW && mobile() === phone && (phone || innerHeight === lastH)) return;
       lastW = innerWidth;
+      lastH = innerHeight;
       phone = mobile();
       layoutStage();
+      measureBand();
+      sc.resize(); idleFrames = 0;
       labelW = [];
       ScrollTrigger.refresh();
       build();
@@ -910,6 +925,6 @@ async function init3D() {
   });
   ScrollTrigger.refresh();
   build();
-  rebuild3D = () => { sc.resize(); build(); };
-  requestAnimationFrame(loop);
+  rebuild3D = () => { sc.resize(); labelW = []; build(); };
+  wake();
 }

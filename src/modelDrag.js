@@ -16,7 +16,13 @@ export function mountModelDrag(canvas, { reduced = false, onChange = () => {} } 
     if (event.isPrimary === false && pointer !== null) { release({ pointerId: pointer }); return; }
     if (event.button !== 0 || pointer !== null || event.isPrimary === false) return;
     pointer = event.pointerId;
-    x0 = event.clientX; y0 = event.clientY; start = drag.ry;
+    x0 = event.clientX; y0 = event.clientY; target = start = drag.ry;
+    // Мышь уже выбрала перетаскивание кнопкой; порог направления нужен только касанию.
+    if (event.pointerType === 'mouse') {
+      horizontal = drag.active = true;
+      canvas.setPointerCapture?.(pointer);
+      onChange();
+    }
   });
   canvas.addEventListener('pointerleave', (event) => { if (!horizontal) release(event); });
   canvas.addEventListener('pointermove', (event) => {
@@ -28,6 +34,7 @@ export function mountModelDrag(canvas, { reduced = false, onChange = () => {} } 
       horizontal = drag.active = drag.used = true;
       canvas.setPointerCapture?.(pointer);
     }
+    if (dx !== 0) drag.used = true;
     target = Math.max(-Math.PI, Math.min(Math.PI, start + dx / Math.max(1, canvas.clientWidth) * Math.PI * 1.6));
     if (reduced) drag.ry = target;
     onChange();
@@ -36,7 +43,7 @@ export function mountModelDrag(canvas, { reduced = false, onChange = () => {} } 
   drag.update = (dt) => {
     const difference = target - drag.ry;
     if (Math.abs(difference) < 1e-4) { drag.ry = target; return false; }
-    drag.ry += difference * (reduced ? 1 : 1 - Math.exp(-dt * (drag.active ? 30 : 10)));
+    drag.ry += difference * (reduced ? 1 : 1 - Math.exp(-dt * (drag.active ? 30 : 4)));
     return true;
   };
   return drag;

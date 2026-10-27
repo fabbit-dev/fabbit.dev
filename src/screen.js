@@ -126,7 +126,7 @@ export function createScreen({ scale = 2, lang = 'ru' } = {}) {
       text(T.div, x1 - 10, y0 + 10, 16, 'right', 500);
     },
     retro(t, x, y, w, h) {
-      doom.draw(g, t, x, y, w, h, scale);
+      doom.draw(g, t, x, y, w, h);
     },
     debug(t) {
       text('CMSIS-DAP v2', 24, 88, 28, 'left', 700);

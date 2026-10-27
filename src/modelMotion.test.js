@@ -1,6 +1,13 @@
 import gsap from 'gsap';
 import { expect, it } from 'vitest';
-import { dampPose } from './modelMotion.js';
+import { dampPose, frameDelta } from './modelMotion.js';
+
+it('не даёт отрицательный шаг, если ввод пришёл позже метки RAF', () => {
+  expect(frameDelta(1000, 1004)).toBe(0);
+  expect(frameDelta(1016, 1000)).toBeCloseTo(0.016);
+  expect(frameDelta(1000)).toBe(0);
+  expect(frameDelta(5000, 1000)).toBe(0.1);
+});
 
 it('успокаивает позу с настоящим служебным полем GSAP', () => {
   const state = { x: 0, ry: 0 }, target = { x: 0, ry: 0 }, keys = Object.keys(target);

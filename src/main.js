@@ -20,7 +20,7 @@ import { isPhoneLayout, isLandscapePhone, slotY, stageHeight } from './layout.js
 import { mountChipFlights } from './chipFlight.js';
 import { mountDonate } from './donate.js';
 import { mountModelDrag } from './modelDrag.js';
-import { dampPose } from './modelMotion.js';
+import { dampPose, frameDelta } from './modelMotion.js';
 
 gsap.registerPlugin(ScrollTrigger);
 // Панель адреса телефона не меняет геометрию глав в svh. Полный refresh во время свайпа рвёт движение.
@@ -670,15 +670,6 @@ async function init3D() {
     onLeave: () => { flat.style.removeProperty('--in'); flat.style.visibility = ''; },
   });
 
-  // Мышь: лёгкий параллакс. Касание не в счёт: иначе прибор остаётся наклонённым к месту тапа.
-  const mouse = { x: 0, y: 0 };
-  if (!reduced) addEventListener('pointermove', (e) => {
-    if (e.pointerType !== 'mouse') return;
-    mouse.x = e.clientX / innerWidth * 2 - 1;
-    mouse.y = e.clientY / innerHeight * 2 - 1;
-    wake();
-  }, { passive: true });
-
   // Интро
   if (!reduced) {
     Object.assign(extra, { ry: -1.2, rx: 0.25, y: -0.2, s: 0.9 });
@@ -830,7 +821,7 @@ async function init3D() {
 
   // Поворот пальцем или мышью: горизонтальный жест крутит прибор, после отпускания он плавно возвращается
   // в ракурс главы. Вертикальный жест остаётся прокруткой (touch-action: pan-y в CSS).
-  const drag = mountModelDrag(canvas, { reduced, onChange: () => { idleFrames = 0; clock.prev = performance.now(); wake(); } });
+  const drag = mountModelDrag(canvas, { reduced, onChange: () => { idleFrames = 0; wake(); } });
   const hint = $('.stage__hint');
   // история уходит с экрана: подсказка гаснет сразу, а не висит одна между главами
   let leaving = false;
@@ -841,7 +832,7 @@ async function init3D() {
   addEventListener('scroll', wake, { passive: true });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { cancelAnimationFrame(frameId); frameId = 0; }
-    else { clock.prev = performance.now(); idleFrames = 0; wake(); }
+    else { idleFrames = 0; wake(); }
   });
 
   const clock = { t0: performance.now(), lastScreen: 0 };
@@ -850,20 +841,14 @@ async function init3D() {
     frameId = 0;
     if (!running || document.hidden) return;
     const t = (now - clock.t0) / 1000;
-    const dt = Math.min(0.1, (now - (clock.prev ?? now)) / 1000);
+    const dt = frameDelta(now, clock.prev);
     clock.prev = now;
     // затухание к цели: постоянная времени ~0.12 с поверх инерции Lenis; без анимаций прибор сразу встаёт на место
     const k = reduced ? 1 : 1 - Math.exp(-dt * 8);
-    let moving = dampPose(state, target, poseKeys, k);
-    // мышь плавно
-    const km = 1 - Math.exp(-dt * 2.5);
-    const dry = mouse.x * 0.18 - (extra.mry || 0), drx = mouse.y * 0.08 - (extra.mrx || 0);
-    extra.mry = (extra.mry || 0) + dry * km;
-    extra.mrx = (extra.mrx || 0) + drx * km;
-    moving = Math.max(moving, Math.abs(dry), Math.abs(drx));
+    const moving = dampPose(state, target, poseKeys, k);
     const dragging = drag.update(dt);
-    const baseRy = extra.ry, baseRx = extra.rx;
-    extra.ry = baseRy + extra.mry + drag.ry; extra.rx = baseRx + extra.mrx;
+    const baseRy = extra.ry;
+    extra.ry = baseRy + drag.ry;
     const screenOn = flatOn || sc.screenVisible();
     // Разрешение экрана под размер в кадре с запасом 1.5×: прибор повёрнут и качается,
     // поэтому текстура чуть уменьшается при выборке, а не растягивается — так контуры остаются резкими.
@@ -900,7 +885,7 @@ async function init3D() {
       sc.render(reduced ? 0 : t, screenChanged);
       drawOverlay();
     } else if (overlayChanged) drawOverlay();
-    extra.ry = baseRy; extra.rx = baseRx;
+    extra.ry = baseRy;
     if (idleFrames < 3 || screenOn || now - flatAt < 450) wake();
   }
 

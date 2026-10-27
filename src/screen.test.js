@@ -4,6 +4,7 @@ import { createScreen, PROFILES } from './screen.js';
 // Проверяем публичный рендер каждого ID, а не наличие имён функций в исходнике.
 const texts = [];
 const context = new Proxy({
+  drawImage: vi.fn(),
   fillText: vi.fn((text) => texts.push(text)),
   measureText: (text) => ({ width: text.length * 10 }),
   createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
@@ -14,6 +15,7 @@ const context = new Proxy({
 
 beforeEach(() => {
   texts.length = 0;
+  context.drawImage.mockClear();
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context);
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
   vi.stubGlobal('Image', class {
@@ -39,6 +41,30 @@ describe.each(['ru', 'en'])('демонстрации экрана (%s)', (lang)
     screen.draw(0);
     expect(texts).toContain(`1/${PROFILES.length}`);
     expect(texts).not.toContain('F1: LOAD');
+  });
+
+  it('сохраняет размер Doom внутри экрана при смене разрешения текстуры', async () => {
+    const screen = createScreen({ scale: 2, lang });
+    await screen.ready;
+    screen.setMode('profile', PROFILES.findIndex((p) => p.id === 'retro'));
+    let reference;
+    for (const time of [5, 10]) {
+      for (const scale of [2, 1.5, 1.25, 1, 0.75, 0.5]) {
+        screen.setScale(scale);
+        context.drawImage.mockClear();
+        screen.draw(time);
+        const [buffer, ...destination] = context.drawImage.mock.calls.find(([image]) => image.width === 320 && image.height === 200);
+        expect(buffer).toBeInstanceOf(HTMLCanvasElement);
+        reference ??= destination;
+        expect(destination).toEqual(reference);
+        const [x, y, w, h] = destination;
+        expect(w / h).toBeCloseTo(320 / 200);
+        expect(x + w / 2).toBeCloseTo(320);
+        expect(w).toBeLessThanOrEqual(640);
+      }
+    }
+    expect(reference[1]).toBe(56);
+    expect(reference[3]).toBe(378);
   });
 
   it('пересчитывает оба счётчика при изменении длины каталога', async () => {

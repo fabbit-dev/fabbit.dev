@@ -390,7 +390,7 @@ export function createDoom() {
   }
 
   // t — время с начала показа профиля. Возвращает, что рисовать.
-  function draw(g, t, x, y, w, h, scale = 1) {
+  function draw(g, t, x, y, w, h) {
     if (t < T_LOG) { drawLog(g, t, x, y, w, h); return; }
     if (t < T_TITLE) {
       renderTitle(t, title); blit(title);
@@ -406,14 +406,12 @@ export function createDoom() {
       }
       if (meltY === false) blit(game);
     }
-    // вывод буфера 320×200 целыми «толстыми» пикселями в рамку экрана
-    // целое число реальных пикселей на пиксель буфера, иначе «толстые» пиксели плывут
-    const k = Math.max(1, Math.floor(Math.min((w * scale) / BW, (h * scale) / BH)));
-    const s = k / scale;
+    // Размер игры — в логических координатах дисплея, как у шапки и подвала.
+    // Разрешение текстуры меняется при прокрутке, но не должно менять поля вокруг игры.
+    const s = Math.min(w / BW, h / BH);
     const dw = BW * s, dh = BH * s;
     g.imageSmoothingEnabled = false;
-    const snap = (v) => Math.round(v * scale) / scale;
-    g.drawImage(buf, snap(x + (w - dw) / 2), snap(y + (h - dh) / 2), dw, dh);
+    g.drawImage(buf, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
   }
 
   function reset() { meltY = null; }

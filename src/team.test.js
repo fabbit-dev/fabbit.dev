@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const PAGES = {
-  'index.html': { grade: /10 классе/, people: [['Рома Горбачев', '15 лет', 'Главный инженер, программист'], ['Ярик Павлюк', '16 лет', 'Корпус и 3D']] },
-  'en/index.html': { grade: /10th grade/, people: [['Roma Gorbachev', 'age 15', 'Lead engineer, programmer'], ['Yarik Pavlyuk', 'age 16', 'Case and 3D']] },
+  'index.html': { grade: /10 классе/, people: [['Рома Горбачев', '16 лет', 'Главный инженер, программист'], ['Ярик Павлюк', '16 лет', 'Корпус и 3D']] },
+  'en/index.html': { grade: /10th grade/, people: [['Roma Gorbachev', 'age 16', 'Lead engineer, programmer'], ['Yarik Pavlyuk', 'age 16', 'Case and 3D']] },
 };
 
 describe.each(Object.keys(PAGES))('глава «Команда» в %s', (file) => {

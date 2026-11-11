@@ -145,12 +145,15 @@ section[id] { scroll-margin-top: calc(var(--nav-h) + var(--s3)); }
   color: var(--fb-ink); background: var(--fb-surface); border: 1px solid var(--fb-line); }
 @media (hover: hover) {
   .btn:hover, .nav__cta:hover { transform: translateY(-2px); }
-  .btn--line:hover { border-color: var(--fb-text-3); }
 }
 .btn:active { transform: scale(.98); }
 .btn--ink { background: #0A0A0A; color: #fff; border-color: #0A0A0A; }
 .btn--paper { background: #fff; color: #0A0A0A; border-color: #fff; }
-.btn--line { background: transparent; }
+/* Текстовая ссылка с высотой кнопки: фон и рамки нет, область касания 48px */
+.btn.btn--text { display: inline-block; line-height: 48px; padding: 0; background: none; border: 0; color: var(--fb-ink);
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .25em; }
+.btn + .btn--text { margin-left: var(--s3); }
+@media (hover: hover) { .btn.btn--text:hover { transform: none; text-decoration-thickness: 2px; } }
 
 /* ── nav: плавающая плашка, левый край совпадает с колонкой текста ── */
 /* Фон плотный, без backdrop-filter: под навигацией каждый кадр перерисовывается WebGL,

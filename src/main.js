@@ -236,6 +236,7 @@ addEventListener('resize', measureProfileDescriptions);
 document.fonts.ready.then(() => { measureProfileDescriptions(); layoutStage(); ScrollTrigger.refresh(); });
 let activeProfile = -1;
 let onProfile = () => {};                       // экран прибора подписывается, когда готов 3D
+let snapPose = () => {};                        // init3D: прибор сразу в ракурс прокрутки
 function setActiveProfile(i) {
   if (i === activeProfile) return;
   activeProfile = i;
@@ -284,7 +285,17 @@ function glide(y, duration) {
     return;
   }
   gliding = true; syncSnap();
-  lenis.scrollTo(y, { duration, onComplete: () => { gliding = false; syncSnap(); } });
+  // Дальний переход (hero → «Поддержать»): полёт через всю историю прокрутил бы за секунду
+  // все ракурсы прибора. Встаём за экран до цели сразу, прибор ставим в ракурс без затухания,
+  // плавно едем только последний участок.
+  const near = innerHeight * 0.6, dist = y - scrollY;
+  if (Math.abs(dist) > innerHeight * 2) {
+    lenis.scrollTo(y - Math.sign(dist) * near, { immediate: true, force: true });
+    ScrollTrigger.update();
+    snapPose();
+    duration = Math.min(duration, 0.9);
+  }
+  lenis.scrollTo(y, { duration, force: true, onComplete: () => { gliding = false; syncSnap(); } });
 }
 function scrollToProfile(i) {
   if (document.documentElement.classList.contains('no-gl')) setActiveProfile(i);
@@ -510,6 +521,7 @@ async function init3D() {
     frameId = requestAnimationFrame(loop);
   }
   onProfile = (i) => { if (screen.mode === 'profile') screen.setMode('profile', i); wake(); };
+  snapPose = () => { for (const k of poseKeys) state[k] = target[k]; idleFrames = 0; wake(); };
 
   let phone = mobile();          // раскладка, под которую собрана временная шкала
   const frameH = () => canvas.clientHeight;
